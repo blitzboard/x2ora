@@ -9,7 +9,11 @@
 plugins {
     // Apply the java-library plugin to add support for Java Library
     id 'java-library'
+    id 'java'
+    id 'application'
 }
+
+mainClassName = 'x2oracle.Test'
 
 repositories {
     // Use jcenter for resolving dependencies.
@@ -29,4 +33,7 @@ dependencies {
 
     // Javalin
     compile 'io.javalin:javalin:3.7.0'
+    
+    // Oracle Graph Client
+    compile fileTree(dir: '../oracle-graph-client-20.1.0/lib/', include: '*.jar')
 }
