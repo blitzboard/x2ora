@@ -1,17 +1,20 @@
 # x2oracle
 
-Get the library.
+Clone this repository.
+
+    $ git clone https://github.com/ryotayamanaka/x2oracle.git
+
+Get Oracle Graph Client library.
 
 * [Oracle Graph Client](https://www.oracle.com/database/technologies/spatialandgraph/property-graph-features/graph-server-and-client/graph-server-and-client-downloads.html)
 
-Unzip.
+Locate and unzip in `x2oracle` directory.
 
+    $ cd x2oracle
     $ unzip oracle-graph-client-20.1.0.zip
 
-Clone this repository at the same directly.
+Run Gradle.
 
-    $ git clone https://github.com/ryotayamanaka/x2oracle.git
-    $ cd x2oracle
     $ ./gradlew run
 
 Try a request.

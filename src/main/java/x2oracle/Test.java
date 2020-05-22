@@ -16,6 +16,9 @@ public class Test {
 		app.get("/node_match/", ctx -> ctx.result(getResult(
 				"node_match",
 				ctx.queryParam("node_ids"))));
+		app.get("/cycle/", ctx -> ctx.result(getResult(
+				"cycle",
+				ctx.queryParam("node_ids"))));
 		app.get("/query/", ctx -> ctx.result(getResult(
 				"query",
 				ctx.queryParam("node_ids"))));
@@ -26,14 +29,29 @@ public class Test {
 		try {
 			ServerInstance instance = Pgx.getInstance("http://localhost:7007");
 			PgxSession session = instance.createSession("my-session");
-			PgxGraph graph = session.getGraph("Customer 360");
+			PgxGraph graph = session.getGraph("Cycle");
 			
+			String query;
+			PgqlResultSet rs;
+
 			switch (endpoint) {
+			
 			case "node_match":
-				String query = "SELECT n, m, e MATCH (n)-[e]->(m) WHERE ID(n) = " + node_ids;
-				PgqlResultSet rs = graph.queryPgql(query);
+				query = "SELECT n, m, e MATCH (n)-[e]->(m) WHERE ID(n) = " + node_ids;
+				rs = graph.queryPgql(query);
 				result = getResultPG(rs, 2, 1);
+				break;
+			
+			case "cycle":
+				query = "SELECT n, ARRAY_AGG(ID(m)), ARRAY_AGG(ID(e))"
+				+ " MATCH TOP 2 SHORTEST ((n) (-[e:transfer]->(m))* (n)) WHERE ID(n) = "
+				+ node_ids;
+				rs = graph.queryPgql(query);
+				result = getResultPG(rs, 1, 0);
+				break;
+			
 			case "query":
+				break;
 			}
 			
 		} catch (ExecutionException e) {

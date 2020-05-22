@@ -3,3 +3,8 @@
 
 # Ignore Gradle build output directory
 build
+
+# Ignore Oracle Graph packages
+oracle-graph-client-20.1.0/
+oracle-graph-client-20.1.0.zip
+
