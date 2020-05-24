@@ -10,7 +10,7 @@ import io.javalin.Javalin;
 import oracle.pgql.lang.PgqlException;
 import oracle.pgx.api.*;
 
-// For testing - http://localhost:7000/node_match/?node_ids=201
+// For testing - http://localhost:7000/node_match?node_ids=1
 
 public class Test {
 	public static void main(String[] szArgs) throws Exception {
@@ -30,6 +30,7 @@ public class Test {
 	}
   
 	private static String getResult(String endpoint, String node_ids) {
+		long time_start = System.nanoTime();
 		String result = "";
 		try {
 			ServerInstance instance = Pgx.getInstance("http://localhost:7007");
@@ -48,13 +49,21 @@ public class Test {
 				break;
 			
 			case "traversal":
-				query = "SELECT * MATCH (n)-[e1]->(n1)-[e2]->(n2)-[e3]->(n3) WHERE ID(n) = " + node_ids;
+				query = "SELECT ID(n), ID(n1), ID(n2), ID(n3), ID(n4), ID(n5), ID(n6),"
+						+ " ID(n) AS e1s, ID(n1) AS e1d,"
+						+ " ID(n1) AS e2s, ID(n2) AS e2d,"
+						+ " ID(n2) AS e3s, ID(n3) AS e3d,"
+						+ " ID(n3) AS e4s, ID(n3) AS e4d,"
+						+ " ID(n4) AS e5s, ID(n4) AS e5d,"
+						+ " ID(n5) AS e6s, ID(n5) AS e6d"
+						+ " MATCH (n)-[e1]->(n1)-[e2]->(n2)-[e3]->(n3)-[e4]->(n4)-[e5]->(n5)-[e6]->(n6)"
+						+ " WHERE ID(n) = " + node_ids;
 				rs = graph.queryPgql(query);
-				result = getResultPG(rs, 4, 3, 0, 0, node_ids);
+				result = getResultPG(rs, 7, 6, 0, 0, node_ids);
 				break;
 
 			case "cycle":
-				query = "SELECT n, ARRAY_AGG(ID(m)), ARRAY_AGG(ID(e))"
+				query = "SELECT ID(n), ARRAY_AGG(ID(m)), ARRAY_AGG(ID(e))"
 				+ " MATCH TOP 2 SHORTEST ((n) (-[e:transfer]->(m))* (n)) WHERE ID(n) = "
 				+ node_ids;
 				rs = graph.queryPgql(query);
@@ -71,7 +80,9 @@ public class Test {
 			result = printException(e);
 		} finally {
 		}
-		return result;
+		long time_end = System.nanoTime();
+		System.out.println("Execution Time: " + (time_end - time_start)/1000/1000 + "ms");
+		return result;		
 	}
 	
 	private static String getResultPG(PgqlResultSet rs, int cnt_v, int cnt_e, int cnt_vl, int cnt_el, String node_ids) {
@@ -80,12 +91,13 @@ public class Test {
 		try {
 			while (rs.next()) {
 				for (int i = 1; i <= cnt_v; i++) {
-					addNode(pg, rs.getVertex(i));
+					addNodeById(pg, rs.getInteger(i).toString());
 				}
-				for (int i = cnt_v + 1; i <= cnt_v + cnt_e; i++) {
-					addEdge(pg, rs.getEdge(i));
+				for (int i = cnt_v + 1; i <= cnt_v + (cnt_e * 2); i = i + 2) {
+					//addEdge(pg, rs.getEdge(i));
+					addEdgeByIds(pg, rs.getInteger(i).toString(), rs.getInteger(i + 1).toString(), "transfer");
 				}
-				for (int i = cnt_v + cnt_e + 1; i <= cnt_v + cnt_e + cnt_vl; i++) {
+				for (int i = cnt_v + (cnt_e * 2) + 1; i <= cnt_v + (cnt_e * 2) + cnt_vl; i++) {
 					if(rs.getList(i) != null) {
 						String node_src = node_ids;
 						for (Object nodeId : rs.getList(i)) {
@@ -97,16 +109,6 @@ public class Test {
 						}
 					}
 				}
-				/*
-				for (int i = cnt_v + cnt_e + cnt_vl + 1; i <= cnt_v + cnt_e + cnt_vl + cnt_el; i++) {
-					if(rs.getList(i) != null) {
-						for (Object nodeId : rs.getList(i)) {
-							System.out.println(nodeId);
-							addEdgeByIds(pg, nodeId.toString());
-						}
-					}
-				}
-				*/
 			}
 		} catch (PgqlException e) {
 			e.printStackTrace();
@@ -124,8 +126,9 @@ public class Test {
 	}
   
 	private static void addNode(PgGraph pg, PgxVertex<?> v) {
-		PgNode node = new PgNode(v.getId().toString());
-		pg.addNode(v.getId().toString(), node);
+		String id = v.getId().toString();
+		PgNode node = new PgNode(id);
+		pg.addNode(id, node);
 	}
 
 	private static void addNodeById(PgGraph pg, String id) {
