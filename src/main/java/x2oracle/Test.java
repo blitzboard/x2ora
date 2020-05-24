@@ -4,7 +4,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.concurrent.ExecutionException;
 
-import org.strategoxt.stratego_lib.int_0_0;
+//import org.strategoxt.stratego_lib.int_0_0;
 
 import io.javalin.Javalin;
 import oracle.pgql.lang.PgqlException;
@@ -14,10 +14,12 @@ import oracle.pgx.api.*;
 
 public class Test {
 	public static void main(String[] szArgs) throws Exception {
-		Javalin app = Javalin.create().start(7000);
+		Javalin app = Javalin.create(config -> {
+			config.enableCorsForAllOrigins();
+		}).start(7000);
 		app.get("/node_match/", ctx -> ctx.result(getResult(
-				"node_match",
-				ctx.queryParam("node_ids"))));
+			"node_match",
+			ctx.queryParam("node_ids"))));
 		app.get("/traversal/", ctx -> ctx.result(getResult(
 			"traversal",
 			ctx.queryParam("node_ids"))));
@@ -25,8 +27,8 @@ public class Test {
 			"cycle",
 			ctx.queryParam("node_ids"))));
 		app.get("/query/", ctx -> ctx.result(getResult(
-				"query",
-				ctx.queryParam("node_ids"))));
+			"query",
+			ctx.queryParam("node_ids"))));
 	}
   
 	private static String getResult(String endpoint, String node_ids) {
@@ -102,7 +104,6 @@ public class Test {
 						String node_src = node_ids;
 						for (Object nodeId : rs.getList(i)) {
 							String node_dst = nodeId.toString();
-							System.out.println(nodeId);
 							addNodeById(pg, nodeId.toString());
 							addEdgeByIds(pg, node_src, node_dst, "transfer");
 							node_src = node_dst;
