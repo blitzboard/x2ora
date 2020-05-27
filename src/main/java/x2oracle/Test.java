@@ -53,15 +53,16 @@ public class Test {
 				break;
 			
 			case "traversal":
-				query = "SELECT ID(n), ID(n1), ID(n2), ID(n3), ID(n4), ID(n5), ID(n6),"
-						+ " ID(n) AS e1s, ID(n1) AS e1d,"
-						+ " ID(n1) AS e2s, ID(n2) AS e2d,"
-						+ " ID(n2) AS e3s, ID(n3) AS e3d,"
-						+ " ID(n3) AS e4s, ID(n3) AS e4d,"
-						+ " ID(n4) AS e5s, ID(n4) AS e5d,"
-						+ " ID(n5) AS e6s, ID(n5) AS e6d"
-						+ " MATCH (n)-[e1]->(n1)-[e2]->(n2)-[e3]->(n3)-[e4]->(n4)-[e5]->(n5)-[e6]->(n6)"
-						+ " WHERE ID(n) = " + node_id;
+				query = "SELECT DISTINCT"
+						+ " ID(n0), ID(n1), ID(n2), ID(n3), ID(n4), ID(n5), ID(n6),"
+						+ " ID(e1), ID(n0) AS e1s, ID(n1) AS e1d,"
+						+ " ID(e2), ID(n1) AS e2s, ID(n2) AS e2d,"
+						+ " ID(e3), ID(n2) AS e3s, ID(n3) AS e3d,"
+						+ " ID(e4), ID(n3) AS e4s, ID(n4) AS e4d,"
+						+ " ID(e5), ID(n4) AS e5s, ID(n5) AS e5d,"
+						+ " ID(e6), ID(n5) AS e6s, ID(n6) AS e6d"
+						+ " MATCH (n0)-[e1]->(n1)-[e2]->(n2)-[e3]->(n3)-[e4]->(n4)-[e5]->(n5)-[e6]->(n6)"
+						+ " WHERE ID(n0) = " + node_id;
 				rs = graph.queryPgql(query);
 				result = getResultPG(rs, 7, 6, 0, 0, node_id);
 				break;
@@ -97,18 +98,19 @@ public class Test {
 				for (int i = 1; i <= cnt_v; i++) {
 					addNodeById(pg, rs.getLong(i));
 				}
-				for (int i = cnt_v + 1; i <= cnt_v + (cnt_e * 2); i = i + 2) {
-					//addEdge(pg, rs.getEdge(i));
-					addEdgeByIds(pg, rs.getLong(i), rs.getLong(i + 1), "transfer");
+				for (int i = cnt_v + 1; i <= cnt_v + (cnt_e * 3); i = i + 3) {
+					addEdgeByIds(pg, rs.getLong(i), rs.getLong(i + 1), rs.getLong(i + 2), "transfer");
 				}
-				for (int i = cnt_v + (cnt_e * 2) + 1; i <= cnt_v + (cnt_e * 2) + cnt_vl; i++) {
+				for (int i = cnt_v + (cnt_e * 3) + 1; i <= cnt_v + (cnt_e * 3) + cnt_vl; i++) {
 					if(rs.getList(i) != null) {
 						long node_src = node_id;
 						long node_dst;
-						for (Object nodeId : rs.getList(i)) {
-							node_dst = (long) nodeId;
+						long edge;
+						for (int j = 0; j < rs.getList(i).size(); j++) {
+							node_dst = (long) rs.getList(i).get(j);
+							edge = (long) rs.getList(i + cnt_vl).get(j);
 							addNodeById(pg, node_dst);
-							addEdgeByIds(pg, node_src, node_dst, "transfer");
+							addEdgeByIds(pg, edge, node_src, node_dst, "transfer");
 							node_src = node_dst;
 						}
 					}
@@ -154,13 +156,13 @@ public class Test {
 	}
 	*/
 	
-	private static void addEdgeByIds(PgGraph pg, long id_s, long id_d, String label) {
+	private static void addEdgeByIds(PgGraph pg, long id, long id_s, long id_d, String label) {
 		PgEdge edge = new PgEdge(
 				id_s,
 				id_d,
 				false
 				);
 		edge.addLabel(label);
-		pg.addEdge(edge);
+		pg.addEdge(id, edge);
 	}
 }

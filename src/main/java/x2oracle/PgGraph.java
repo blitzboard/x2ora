@@ -9,15 +9,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 class PgGraph {
   public String name;
   public Map<Long, PgNode> nodes = new HashMap<>();
-  public List<PgEdge> edges = new ArrayList<PgEdge>();
+  //public List<PgEdge> edges = new ArrayList<PgEdge>();
+  public Map<Long, PgEdge> edges = new HashMap<>();
   public void setName(String name) {
     this.name = name;
   }
   public void addNode(long id, PgNode node) {
     nodes.put(id, node);
   }
-  public void addEdge(PgEdge edge) {
-    edges.add(edge);
+  public void addEdge(long id, PgEdge edge) {
+    edges.put(id, edge);
   }
   public String exportJSON() {
     ObjectMapper mapper = new ObjectMapper();
