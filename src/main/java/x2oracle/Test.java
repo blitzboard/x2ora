@@ -96,7 +96,7 @@ public class Test {
 		try {
 			while (rs.next()) {
 				for (int i = 1; i <= cnt_v; i++) {
-					addNodeById(pg, rs.getLong(i));
+					addNodeById(pg, rs.getLong(i), "Account");
 				}
 				for (int i = cnt_v + 1; i <= cnt_v + (cnt_e * 3); i = i + 3) {
 					addEdgeByIds(pg, rs.getLong(i), rs.getLong(i + 1), rs.getLong(i + 2), "transfer");
@@ -109,7 +109,7 @@ public class Test {
 						for (int j = 0; j < rs.getList(i).size(); j++) {
 							node_dst = (long) rs.getList(i).get(j);
 							edge = (long) rs.getList(i + cnt_vl).get(j);
-							addNodeById(pg, node_dst);
+							addNodeById(pg, node_dst, "Account");
 							addEdgeByIds(pg, edge, node_src, node_dst, "transfer");
 							node_src = node_dst;
 						}
@@ -139,8 +139,9 @@ public class Test {
 	}
 	*/
 
-	private static void addNodeById(PgGraph pg, long id) {
+	private static void addNodeById(PgGraph pg, long id, String label) {
 		PgNode node = new PgNode(id);
+		node.addLabel(label);
 		pg.addNode(id, node);
 	}
 
