@@ -3,9 +3,6 @@ package x2oracle;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.concurrent.ExecutionException;
-
-//import org.strategoxt.stratego_lib.int_0_0;
-
 import io.javalin.Javalin;
 import oracle.pgql.lang.PgqlException;
 import oracle.pgx.api.*;
@@ -22,15 +19,21 @@ public class Test {
 			ctx.queryParam("node_ids"))));
 		app.get("/traversal/", ctx -> ctx.result(getResult(
 			"traversal",
-			ctx.queryParam("node_ids"))));
+			ctx.queryParam("node_ids")//,
+			//ctx.queryParam("min_hops"),
+			//ctx.queryParam("max_hops")
+			)));
 		app.get("/cycle/", ctx -> ctx.result(getResult(
 			"cycle",
+			ctx.queryParam("node_ids"))));
+		app.get("/compute/random_walk", ctx -> ctx.result(getResult(
+			"compute-random_walk",
 			ctx.queryParam("node_ids"))));
 		app.get("/query/", ctx -> ctx.result(getResult(
 			"query",
 			ctx.queryParam("node_ids"))));
 	}
-  
+
 	private static String getResult(String endpoint, String node_ids) {
 		long time_start = System.nanoTime();
 		String result = "";
@@ -54,7 +57,13 @@ public class Test {
 			
 			case "traversal":
 				query = "SELECT DISTINCT"
-						+ " ID(n0), ID(n1), ID(n2), ID(n3), ID(n4), ID(n5), ID(n6),"
+						+ " ID(n0), LABEL(n0),"
+						+ " ID(n1), LABEL(n1),"
+						+ " ID(n2), LABEL(n2),"
+						+ " ID(n3), LABEL(n3),"
+						+ " ID(n4), LABEL(n4),"
+						+ " ID(n5), LABEL(n5),"
+						+ " ID(n6), LABEL(n6),"
 						+ " ID(e1), ID(n0) AS e1s, ID(n1) AS e1d,"
 						+ " ID(e2), ID(n1) AS e2s, ID(n2) AS e2d,"
 						+ " ID(e3), ID(n2) AS e3s, ID(n3) AS e3d,"
@@ -68,7 +77,7 @@ public class Test {
 				break;
 
 			case "cycle":
-				query = "SELECT ID(n), ARRAY_AGG(ID(m)), ARRAY_AGG(ID(e))"
+				query = "SELECT ID(n), LABEL(n), ARRAY_AGG(ID(m)), ARRAY_AGG(ID(e))"
 				+ " MATCH TOP 2 SHORTEST ((n) (-[e:transfer]->(m))* (n)) WHERE ID(n) = "
 				+ node_id;
 				rs = graph.queryPgql(query);
@@ -90,25 +99,34 @@ public class Test {
 		return result;		
 	}
 	
-	private static String getResultPG(PgqlResultSet rs, int cnt_v, int cnt_e, int cnt_vl, int cnt_el, long node_id) {
+	private static String getResultPG(PgqlResultSet rs, int cnt_n, int cnt_e, int cnt_nl, int cnt_el, long node_id) {
 		PgGraph pg = new PgGraph();
 		pg.setName("test_graph");
 		try {
 			while (rs.next()) {
-				for (int i = 1; i <= cnt_v; i++) {
-					addNodeById(pg, rs.getLong(i), "Account");
+
+				int length_n = 2;
+				int length_e = 3;
+				int offset_e = cnt_n * length_n;
+				int offset_nl = offset_e + (cnt_e * length_e);
+
+				// Nodes
+				for (int i = 1; i <= offset_e; i = i + length_n) {
+					addNodeById(pg, rs.getLong(i), rs.getString(i + 1));
 				}
-				for (int i = cnt_v + 1; i <= cnt_v + (cnt_e * 3); i = i + 3) {
+				// Edges
+				for (int i = offset_e + 1; i <= offset_nl; i = i + length_e) {
 					addEdgeByIds(pg, rs.getLong(i), rs.getLong(i + 1), rs.getLong(i + 2), "transfer");
 				}
-				for (int i = cnt_v + (cnt_e * 3) + 1; i <= cnt_v + (cnt_e * 3) + cnt_vl; i++) {
+				// Node List
+				for (int i = offset_nl + 1; i <= offset_nl + cnt_nl; i++) {
 					if(rs.getList(i) != null) {
 						long node_src = node_id;
 						long node_dst;
 						long edge;
 						for (int j = 0; j < rs.getList(i).size(); j++) {
 							node_dst = (long) rs.getList(i).get(j);
-							edge = (long) rs.getList(i + cnt_vl).get(j);
+							edge = (long) rs.getList(i + cnt_nl).get(j);
 							addNodeById(pg, node_dst, "Account");
 							addEdgeByIds(pg, edge, node_src, node_dst, "transfer");
 							node_src = node_dst;
