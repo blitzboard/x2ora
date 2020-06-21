@@ -8,16 +8,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 class PgGraph {
   public String name;
-  public Map<Long, PgNode> nodes = new HashMap<>();
+  public Map<String, PgNode> nodes = new HashMap<>();
   //public List<PgEdge> edges = new ArrayList<PgEdge>();
-  public Map<Long, PgEdge> edges = new HashMap<>();
+  public Map<String, PgEdge> edges = new HashMap<>();
   public void setName(String name) {
     this.name = name;
   }
-  public void addNode(long id, PgNode node) {
+  public void addNode(String id, PgNode node) {
     nodes.put(id, node);
   }
-  public void addEdge(long id, PgEdge edge) {
+  public void addEdge(String id, PgEdge edge) {
     edges.put(id, edge);
   }
   public String exportJSON() {
@@ -33,10 +33,10 @@ class PgGraph {
 }
 
 class PgNode {
-  public long id;
+  public String id;
   public Set<String> labels = new HashSet<String>();
   public Map<String, String> properties = new HashMap<>();
-  public PgNode(long id) {
+  public PgNode(String id) {
     this.id = id;
   }
   public void addLabel(String label) {
@@ -48,12 +48,12 @@ class PgNode {
 }
 
 class PgEdge {
-  public long id1;
-  public long id2;
+  public String id1;
+  public String id2;
   public boolean undirected = false;
   public Set<String> labels = new HashSet<String>();
   public Map<String, String> properties = new HashMap<>();
-  public PgEdge(long id1, long id2, boolean undirected) {
+  public PgEdge(String id1, String id2, boolean undirected) {
     this.id1 = id1;
     this.id2 = id2;
     this.undirected = undirected;

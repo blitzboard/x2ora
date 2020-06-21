@@ -9,7 +9,9 @@ bin/
 
 # Ignore Oracle Graph packages
 oracle-graph-client-20.1.0/
+oracle-graph-client-20.2.0/
 oracle-graph-client-20.1.0.zip
+oracle-graph-client-20.2.0.zip
 
 # Ignore IDE settings
 .settings/

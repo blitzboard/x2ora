@@ -11,7 +11,7 @@ Get Oracle Graph Client library.
 Locate and unzip in `x2oracle` directory.
 
     $ cd x2oracle
-    $ unzip oracle-graph-client-20.1.0.zip
+    $ unzip oracle-graph-client-20.2.0.zip
 
 Run Gradle.
 

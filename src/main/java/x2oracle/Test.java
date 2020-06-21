@@ -26,6 +26,10 @@ public class Test {
 		app.get("/cycle/", ctx -> ctx.result(getResult(
 			"cycle",
 			ctx.queryParam("node_ids"))));
+		app.get("/path/shortest/", ctx -> ctx.result(getResult(
+			"path-shortest",
+			ctx.queryParam("src_node_ids"),
+			ctx.queryParam("dst_node_ids"))));	
 		app.get("/compute/random_walk", ctx -> ctx.result(getResult(
 			"compute-random_walk",
 			ctx.queryParam("node_ids"))));
@@ -40,19 +44,21 @@ public class Test {
 		try {
 			ServerInstance instance = Pgx.getInstance("http://localhost:7007");
 			PgxSession session = instance.createSession("my-session");
-			PgxGraph graph = session.getGraph("Cycle");
+			PgxGraph graph = session.getGraph("Online Retail");
 			
 			String query;
 			PgqlResultSet rs;
 			
-			long node_id = Long.parseLong(node_ids);
+			//long node_id = Long.parseLong(node_ids);
 
 			switch (endpoint) {
 			
 			case "node_match":
-				query = "SELECT n, m, e MATCH (n)-[e]->(m) WHERE ID(n) = " + node_id;
+				query = "SELECT n, m, e MATCH (n)-[e]->(m)"
+						+ " WHERE ID(n) = " + node_ids
+						+ " ORDER BY n.pagerank DESC";
 				rs = graph.queryPgql(query);
-				result = getResultPG(rs, 2, 1, 0, 0, node_id);
+				result = getResultPG(rs, 2, 1, 0, 0, node_ids);
 				break;
 			
 			case "traversal":
@@ -71,20 +77,41 @@ public class Test {
 						+ " ID(e5), ID(n4) AS e5s, ID(n5) AS e5d,"
 						+ " ID(e6), ID(n5) AS e6s, ID(n6) AS e6d"
 						+ " MATCH (n0)-[e1]->(n1)-[e2]->(n2)-[e3]->(n3)-[e4]->(n4)-[e5]->(n5)-[e6]->(n6)"
-						+ " WHERE ID(n0) = " + node_id;
+						+ " WHERE ID(n0) = " + node_ids;
 				rs = graph.queryPgql(query);
-				result = getResultPG(rs, 7, 6, 0, 0, node_id);
+				result = getResultPG(rs, 7, 6, 0, 0, node_ids);
 				break;
 
 			case "cycle":
 				query = "SELECT ID(n), LABEL(n), ARRAY_AGG(ID(m)), ARRAY_AGG(ID(e))"
 				+ " MATCH TOP 2 SHORTEST ((n) (-[e:transfer]->(m))* (n)) WHERE ID(n) = "
-				+ node_id;
+				+ node_ids;
 				rs = graph.queryPgql(query);
-				result = getResultPG(rs, 1, 0, 1, 1, node_id);
+				result = getResultPG(rs, 1, 0, 1, 1, node_ids);
 				break;
 			
-			case "query":
+			case "path-shotest":
+				query = "SELECT ID(n), LABEL(n), ARRAY_AGG(ID(m)), ARRAY_AGG(ID(e))"
+				+ " MATCH TOP 2 SHORTEST ((n) (-[e:transfer]->(m))* (n)) WHERE ID(n) = "
+				+ node_ids;
+				rs = graph.queryPgql(query);
+				result = getResultPG(rs, 1, 0, 1, 1, node_ids);
+				break;
+
+			case "compute-random_walk":
+				Analyst analyst = session.createAnalyst();
+				System.out.println("node_ids: " + node_ids);
+				PgxVertex<String> vertex = graph.getVertex(node_ids);
+				VertexSet<String> vertexSet = graph.createVertexSet();
+				vertexSet.add(vertex);
+				analyst.personalizedPagerank(graph, vertexSet);
+				query = "SELECT ID(n), LABEL(n)"
+				        + " MATCH (n)"
+						+ " WHERE LABEL(n) = 'Product'"
+						+ " ORDER BY n.pagerank DESC LIMIT 10";
+				rs = graph.queryPgql(query);
+				System.out.println(rs);
+				result = getResultPG(rs, 1, 0, 0, 0, node_ids);
 				break;
 			}
 			
@@ -96,10 +123,45 @@ public class Test {
 		}
 		long time_end = System.nanoTime();
 		System.out.println("Execution Time: " + (time_end - time_start)/1000/1000 + "ms");
-		return result;		
+		return result;
+	}
+
+	private static String getResult(String endpoint, String src_node_ids, String dst_node_ids) {
+		long time_start = System.nanoTime();
+		String result = "";
+		try {
+			ServerInstance instance = Pgx.getInstance("http://localhost:7007");
+			PgxSession session = instance.createSession("my-session");
+			PgxGraph graph = session.getGraph("Online Retail");
+			
+			String query;
+			PgqlResultSet rs;
+			
+			switch (endpoint) {
+						
+			case "path-shortest":
+				query = "SELECT ID(src), LABEL(src), ID(dst), LABEL(dst), ARRAY_AGG(ID(m)), ARRAY_AGG(ID(e))"
+				+ " MATCH TOP 10 SHORTEST ((src) (-[e]->(m))* (dst))"
+				+ " WHERE ID(src) = '" + src_node_ids + "'"
+				+ "   AND ID(dst) = '" + dst_node_ids + "'";
+				rs = graph.queryPgql(query);
+				System.out.println("test");
+				result = getResultPG(rs, 2, 0, 1, 1, src_node_ids);
+				break;
+			}
+
+		} catch (ExecutionException e) {
+			result = printException(e);
+		} catch (InterruptedException e) {
+			result = printException(e);
+		} finally {
+		}
+		long time_end = System.nanoTime();
+		System.out.println("Execution Time: " + (time_end - time_start)/1000/1000 + "ms");
+		return result;
 	}
 	
-	private static String getResultPG(PgqlResultSet rs, int cnt_n, int cnt_e, int cnt_nl, int cnt_el, long node_id) {
+	private static String getResultPG(PgqlResultSet rs, int cnt_n, int cnt_e, int cnt_nl, int cnt_el, String node_ids) {
 		PgGraph pg = new PgGraph();
 		pg.setName("test_graph");
 		try {
@@ -112,23 +174,24 @@ public class Test {
 
 				// Nodes
 				for (int i = 1; i <= offset_e; i = i + length_n) {
-					addNodeById(pg, rs.getLong(i), rs.getString(i + 1));
+					System.out.println("test");
+					addNodeById(pg, rs.getString(i), rs.getString(i + 1));
 				}
 				// Edges
 				for (int i = offset_e + 1; i <= offset_nl; i = i + length_e) {
-					addEdgeByIds(pg, rs.getLong(i), rs.getLong(i + 1), rs.getLong(i + 2), "transfer");
+					addEdgeByIds(pg, rs.getString(i), rs.getString(i + 1), rs.getString(i + 2), "transfer");
 				}
 				// Node List
 				for (int i = offset_nl + 1; i <= offset_nl + cnt_nl; i++) {
 					if(rs.getList(i) != null) {
-						long node_src = node_id;
-						long node_dst;
-						long edge;
+						String node_src = node_ids;
+						String node_dst;
+						Long edge;
 						for (int j = 0; j < rs.getList(i).size(); j++) {
-							node_dst = (long) rs.getList(i).get(j);
-							edge = (long) rs.getList(i + cnt_nl).get(j);
-							addNodeById(pg, node_dst, "Account");
-							addEdgeByIds(pg, edge, node_src, node_dst, "transfer");
+							node_dst = (String) rs.getList(i).get(j);
+							edge = (Long) rs.getList(i + cnt_nl).get(j);
+							addNodeById(pg, node_dst, "");
+							addEdgeByIds(pg, edge.toString(), node_src, node_dst, "");
 							node_src = node_dst;
 						}
 					}
@@ -148,34 +211,14 @@ public class Test {
 		pw.flush();
 		return sw.toString();
 	}
-  
-	/*
-	private static void addNode(PgGraph pg, PgxVertex<?> v) {
-		long id = (long) v.getId();
-		PgNode node = new PgNode(id);
-		pg.addNode(id, node);
-	}
-	*/
 
-	private static void addNodeById(PgGraph pg, long id, String label) {
+	private static void addNodeById(PgGraph pg, String id, String label) {
 		PgNode node = new PgNode(id);
 		node.addLabel(label);
 		pg.addNode(id, node);
 	}
 
-	/*
-	private static void addEdge(PgGraph pg, PgxEdge e) {
-		PgEdge edge = new PgEdge(
-				(long) e.getSource().getId(),
-				(long) e.getDestination().getId(),
-				false
-				);
-		edge.addLabel(e.getLabel());
-		pg.addEdge(edge);
-	}
-	*/
-	
-	private static void addEdgeByIds(PgGraph pg, long id, long id_s, long id_d, String label) {
+	private static void addEdgeByIds(PgGraph pg, String id, String id_s, String id_d, String label) {
 		PgEdge edge = new PgEdge(
 				id_s,
 				id_d,
