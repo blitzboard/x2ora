@@ -89,14 +89,6 @@ public class Test {
 				rs = graph.queryPgql(query);
 				result = getResultPG(rs, 1, 0, 1, 1, node_ids);
 				break;
-			
-			case "path-shotest":
-				query = "SELECT ID(n), LABEL(n), ARRAY_AGG(ID(m)), ARRAY_AGG(ID(e))"
-				+ " MATCH TOP 2 SHORTEST ((n) (-[e:transfer]->(m))* (n)) WHERE ID(n) = "
-				+ node_ids;
-				rs = graph.queryPgql(query);
-				result = getResultPG(rs, 1, 0, 1, 1, node_ids);
-				break;
 
 			case "compute-random_walk":
 				Analyst analyst = session.createAnalyst();
@@ -110,10 +102,10 @@ public class Test {
 						+ " WHERE LABEL(n) = 'Product'"
 						+ " ORDER BY n.pagerank DESC LIMIT 10";
 				rs = graph.queryPgql(query);
-				System.out.println(rs);
 				result = getResultPG(rs, 1, 0, 0, 0, node_ids);
 				break;
 			}
+			session.destroy();
 			
 		} catch (ExecutionException e) {
 			result = printException(e);
@@ -140,15 +132,19 @@ public class Test {
 			switch (endpoint) {
 						
 			case "path-shortest":
-				query = "SELECT ID(src), LABEL(src), ID(dst), LABEL(dst), ARRAY_AGG(ID(m)), ARRAY_AGG(ID(e))"
+				query = "SELECT"
+				+ " ID(src), LABEL(src),"
+				+ " ID(dst), LABEL(dst),"
+				+ " ARRAY_AGG(ID(m)), ARRAY_AGG(LABEL(m)),"
+				+ " ARRAY_AGG(ID(e)), ARRAY_AGG(LABEL(e))"
 				+ " MATCH TOP 10 SHORTEST ((src) (-[e]->(m))* (dst))"
 				+ " WHERE ID(src) = '" + src_node_ids + "'"
 				+ "   AND ID(dst) = '" + dst_node_ids + "'";
 				rs = graph.queryPgql(query);
-				System.out.println("test");
 				result = getResultPG(rs, 2, 0, 1, 1, src_node_ids);
 				break;
 			}
+			session.destroy();
 
 		} catch (ExecutionException e) {
 			result = printException(e);
@@ -167,31 +163,36 @@ public class Test {
 		try {
 			while (rs.next()) {
 
-				int length_n = 2;
-				int length_e = 3;
-				int offset_e = cnt_n * length_n;
-				int offset_nl = offset_e + (cnt_e * length_e);
+				int length_n = 2;  // ID + Label
+				int length_e = 3;  // ID + Src Node ID + Dst Node ID
+				int length_nl = 2; // ID + Label
 
+				int offset_e = cnt_n * length_n;                  // Edge Offset
+				int offset_nl = offset_e + (cnt_e * length_e);    // Node List Offset
+				
 				// Nodes
 				for (int i = 1; i <= offset_e; i = i + length_n) {
-					System.out.println("test");
 					addNodeById(pg, rs.getString(i), rs.getString(i + 1));
 				}
 				// Edges
 				for (int i = offset_e + 1; i <= offset_nl; i = i + length_e) {
 					addEdgeByIds(pg, rs.getString(i), rs.getString(i + 1), rs.getString(i + 2), "transfer");
 				}
-				// Node List
+				// Node List + Edge List
 				for (int i = offset_nl + 1; i <= offset_nl + cnt_nl; i++) {
 					if(rs.getList(i) != null) {
 						String node_src = node_ids;
 						String node_dst;
+						String node_dst_label;
 						Long edge;
+						String edge_label;
 						for (int j = 0; j < rs.getList(i).size(); j++) {
 							node_dst = (String) rs.getList(i).get(j);
-							edge = (Long) rs.getList(i + cnt_nl).get(j);
-							addNodeById(pg, node_dst, "");
-							addEdgeByIds(pg, edge.toString(), node_src, node_dst, "");
+							node_dst_label = (String) rs.getList(i + 1).get(j);
+							edge = (Long) rs.getList(i + cnt_nl * length_nl).get(j);
+							edge_label = (String) rs.getList(i + cnt_nl * length_nl + 1).get(j);
+							addNodeById(pg, node_dst, node_dst_label);
+							addEdgeByIds(pg, edge.toString(), node_src, node_dst, edge_label);
 							node_src = node_dst;
 						}
 					}
