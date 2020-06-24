@@ -17,8 +17,14 @@ class PgGraph {
   public void addNode(String id, PgNode node) {
     nodes.put(id, node);
   }
+  public PgNode getNode(String id) {
+    return nodes.get(id);
+  }
   public void addEdge(String id, PgEdge edge) {
     edges.put(id, edge);
+  }
+  public PgEdge getEdge(String id) {
+    return edges.get(id);
   }
   public String exportJSON() {
     ObjectMapper mapper = new ObjectMapper();

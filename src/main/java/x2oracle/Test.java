@@ -2,18 +2,22 @@ package x2oracle;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import io.javalin.Javalin;
 import oracle.pgql.lang.PgqlException;
 import oracle.pgx.api.*;
-
-// For testing - http://localhost:7000/node_match?node_ids=1
 
 public class Test {
 	public static void main(String[] szArgs) throws Exception {
 		Javalin app = Javalin.create(config -> {
 			config.enableCorsForAllOrigins();
 		}).start(7000);
+		
 		app.get("/node_match/", ctx -> ctx.result(getResult(
 			"node_match",
 			ctx.queryParam("node_ids"))));
@@ -46,11 +50,10 @@ public class Test {
 			PgxSession session = instance.createSession("my-session");
 			PgxGraph graph = session.getGraph("Online Retail");
 			
+			
 			String query;
 			PgqlResultSet rs;
 			
-			//long node_id = Long.parseLong(node_ids);
-
 			switch (endpoint) {
 			
 			case "node_match":
@@ -97,7 +100,7 @@ public class Test {
 				VertexSet<String> vertexSet = graph.createVertexSet();
 				vertexSet.add(vertex);
 				analyst.personalizedPagerank(graph, vertexSet);
-				query = "SELECT ID(n), LABEL(n)"
+				query = "SELECT ID(n), LABEL(n), n.country, n.description"
 				        + " MATCH (n)"
 						+ " WHERE LABEL(n) = 'Product'"
 						+ " ORDER BY n.pagerank DESC LIMIT 10";
@@ -126,6 +129,31 @@ public class Test {
 			PgxSession session = instance.createSession("my-session");
 			PgxGraph graph = session.getGraph("Online Retail");
 			
+			System.out.println(graph.getVertexProperties());
+			Set<VertexProperty<?,?>> vpl = graph.getVertexProperties();
+			System.out.println(vpl.size());
+			System.out.println(vpl.toArray());
+
+			List<VertexProperty<?,?>> list = new ArrayList<VertexProperty<?,?>>(vpl);
+
+			//String[] node_props = new String[];
+			
+			//Iterator<VertexProperty<?,?>> it = vpl.iterator();
+
+			//while(it.hasNext()){
+			//	System.out.println(it.next());
+			//}
+
+			System.out.println(list.get(0));
+
+			vpl.forEach((VertexProperty<?,?> vp) -> {
+				System.out.println(vp);
+				System.out.println(vp.getName());
+				System.out.println(vp.getType().name());
+				//node_props[0][0] = vp.getName();
+				//node_props[0][1] = vp.getType();
+			});
+			
 			String query;
 			PgqlResultSet rs;
 			
@@ -133,8 +161,8 @@ public class Test {
 						
 			case "path-shortest":
 				query = "SELECT"
-				+ " ID(src), LABEL(src),"
-				+ " ID(dst), LABEL(dst),"
+				+ " ID(src), LABEL(src)," + " src." + list.get(0).getName() + "," + " src." + list.get(1).getName() + ","
+				+ " ID(dst), LABEL(dst)," + " dst." + list.get(0).getName() + "," + " dst." + list.get(1).getName() + ","
 				+ " ARRAY_AGG(ID(m)), ARRAY_AGG(LABEL(m)),"
 				+ " ARRAY_AGG(ID(e)), ARRAY_AGG(LABEL(e))"
 				+ " MATCH TOP 10 SHORTEST ((src) (-[e]->(m))* (dst))"
@@ -163,7 +191,7 @@ public class Test {
 		try {
 			while (rs.next()) {
 
-				int length_n = 2;  // ID + Label
+				int length_n = 4;  // ID + Label
 				int length_e = 3;  // ID + Src Node ID + Dst Node ID
 				int length_nl = 2; // ID + Label
 
@@ -172,7 +200,16 @@ public class Test {
 				
 				// Nodes
 				for (int i = 1; i <= offset_e; i = i + length_n) {
-					addNodeById(pg, rs.getString(i), rs.getString(i + 1));
+					String id = rs.getString(i);
+					String label = rs.getString(i + 1);
+					addNodeById(pg, id, label);
+					PgNode node = pg.getNode(id);
+					if (rs.getString(i + 2) != null) {
+						node.addProperty("country", rs.getString(i + 2));
+					}
+					if (rs.getString(i + 3) != null) {
+						node.addProperty("description", rs.getString(i + 3));
+					}
 				}
 				// Edges
 				for (int i = offset_e + 1; i <= offset_nl; i = i + length_e) {
