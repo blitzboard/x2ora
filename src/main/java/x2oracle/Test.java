@@ -19,10 +19,11 @@ public class Test {
 		ServerInstance instance = Pgx.getInstance("http://localhost:7007");
 		PgxSession session = instance.createSession("my-session");
 
-		app.get("/node_match/", ctx -> ctx.result(getResult(
+		app.get("/node_match/", ctx -> ctx.result(runNodeMatch(
 			session,
-			"node_match",
-			ctx.queryParam("node_ids")
+			ctx.queryParam("labels"),
+			ctx.queryParam("order_by"),
+			ctx.queryParam("limit")
 			)));
 		app.get("/traversal/", ctx -> ctx.result(getResult(
 			session,
@@ -63,14 +64,6 @@ public class Test {
 			List<VertexProperty<?,?>> list = new ArrayList<VertexProperty<?,?>>(vertexProperties);
 		
 			switch (endpoint) {
-			
-			case "node_match":
-				query = "SELECT n, m, e MATCH (n)-[e]->(m)"
-						+ " WHERE ID(n) = " + node_ids
-						+ " ORDER BY n.pagerank DESC";
-				rs = graph.queryPgql(query);
-				result = getResultPG(rs, 2, 1, 0, 0, node_ids, list);
-				break;
 			
 			case "traversal":
 				query = "SELECT DISTINCT"
@@ -129,6 +122,24 @@ public class Test {
 			analyst.personalizedPagerank(graph, vertexSet);
 			System.out.println("INFO: personalizedPagerank executed");
 
+		} catch (ExecutionException e) {
+			result = printException(e);
+		} catch (InterruptedException e) {
+			result = printException(e);
+		} finally {
+		}
+		long time_end = System.nanoTime();
+		System.out.println("Execution Time: " + (time_end - time_start)/1000/1000 + "ms");
+		result = "{\"status\":\"success\"}";
+		return result;
+	}
+
+	private static String runNodeMatch(PgxSession session, String labels, String order_by, String limit) {
+		long time_start = System.nanoTime();
+		String result = "";
+		try {
+			PgxGraph graph = session.getGraph("Online Retail");
+			
 			Set<VertexProperty<?,?>> vertexProperties = graph.getVertexProperties();
 			List<VertexProperty<?,?>> list = new ArrayList<VertexProperty<?,?>>(vertexProperties);
 			
@@ -137,10 +148,10 @@ public class Test {
 
 			query = "SELECT ID(n), LABEL(n), n." + list.get(0).getName() + ", n." + list.get(1).getName() + ", n." + list.get(2).getName()
 					+ " MATCH (n)"
-					+ " WHERE LABEL(n) = 'Product'"
-					+ " ORDER BY n.pagerank DESC LIMIT 10";
+					+ " WHERE LABEL(n) = '" + labels + "'"
+					+ " ORDER BY n." + order_by + " DESC LIMIT " + limit;
 			rs = graph.queryPgql(query);
-			result = getResultPG(rs, 1, 0, 0, 0, node_ids, list);
+			result = getResultPG(rs, 1, 0, 0, 0, "", list);
 
 		} catch (ExecutionException e) {
 			result = printException(e);
@@ -159,15 +170,6 @@ public class Test {
 		try {
 			PgxGraph graph = session.getGraph("Online Retail");
 			
-			Analyst analyst = session.createAnalyst();
-			System.out.println("node_ids: " + src_node_ids);
-			PgxVertex<String> vertex = graph.getVertex(src_node_ids);
-			VertexSet<String> vertexSet = graph.createVertexSet();
-			vertexSet.add(vertex);
-			graph.destroyVertexPropertyIfExists("pagerank");
-			analyst.personalizedPagerank(graph, vertexSet);
-			System.out.println("INFO: personalizedPagerank executed");
-
 			Set<VertexProperty<?,?>> vertexProperties = graph.getVertexProperties();
 			List<VertexProperty<?,?>> list = new ArrayList<VertexProperty<?,?>>(vertexProperties);
 			
