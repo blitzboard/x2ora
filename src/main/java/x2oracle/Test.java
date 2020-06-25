@@ -16,38 +16,45 @@ public class Test {
 			config.enableCorsForAllOrigins();
 		}).start(7000);
 		
+		ServerInstance instance = Pgx.getInstance("http://localhost:7007");
+		PgxSession session = instance.createSession("my-session");
+
 		app.get("/node_match/", ctx -> ctx.result(getResult(
+			session,
 			"node_match",
 			ctx.queryParam("node_ids")
 			)));
 		app.get("/traversal/", ctx -> ctx.result(getResult(
+			session,
 			"traversal",
 			ctx.queryParam("node_ids")//,
 			//ctx.queryParam("min_hops"),
 			//ctx.queryParam("max_hops")
 			)));
 		app.get("/cycle/", ctx -> ctx.result(getResult(
+			session,
 			"cycle",
 			ctx.queryParam("node_ids")
 			)));
 		app.get("/path/shortest/", ctx -> ctx.result(runPathShortest(
+			session,
 			ctx.queryParam("src_node_ids"),
 			ctx.queryParam("dst_node_ids")
 			)));
 		app.get("/compute/random_walk", ctx -> ctx.result(runComputeRandomWalk(
+			session,
 			ctx.queryParam("node_ids")
 			)));
 		app.get("/query/", ctx -> ctx.result(getResult(
+			session,
 			"query",
 			ctx.queryParam("node_ids"))));
 	}
 
-	private static String getResult(String endpoint, String node_ids) {
+	private static String getResult(PgxSession session, String endpoint, String node_ids) {
 		long time_start = System.nanoTime();
 		String result = "";
 		try {
-			ServerInstance instance = Pgx.getInstance("http://localhost:7007");
-			PgxSession session = instance.createSession("my-session");
 			PgxGraph graph = session.getGraph("Online Retail");
 						
 			String query;
@@ -95,7 +102,6 @@ public class Test {
 				break;
 
 			}
-			session.destroy();
 			
 		} catch (ExecutionException e) {
 			result = printException(e);
@@ -108,12 +114,10 @@ public class Test {
 		return result;
 	}
 	
-	private static String runComputeRandomWalk(String node_ids) {
+	private static String runComputeRandomWalk(PgxSession session, String node_ids) {
 		long time_start = System.nanoTime();
 		String result = "";
 		try {
-			ServerInstance instance = Pgx.getInstance("http://localhost:7007");
-			PgxSession session = instance.createSession("my-session");
 			PgxGraph graph = session.getGraph("Online Retail");
 			
 			Analyst analyst = session.createAnalyst();
@@ -121,6 +125,7 @@ public class Test {
 			PgxVertex<String> vertex = graph.getVertex(node_ids);
 			VertexSet<String> vertexSet = graph.createVertexSet();
 			vertexSet.add(vertex);
+			graph.destroyVertexPropertyIfExists("pagerank");
 			analyst.personalizedPagerank(graph, vertexSet);
 			System.out.println("INFO: personalizedPagerank executed");
 
@@ -137,8 +142,6 @@ public class Test {
 			rs = graph.queryPgql(query);
 			result = getResultPG(rs, 1, 0, 0, 0, node_ids, list);
 
-			session.destroy();
-
 		} catch (ExecutionException e) {
 			result = printException(e);
 		} catch (InterruptedException e) {
@@ -150,12 +153,10 @@ public class Test {
 		return result;
 	}
 
-	private static String runPathShortest(String src_node_ids, String dst_node_ids) {
+	private static String runPathShortest(PgxSession session, String src_node_ids, String dst_node_ids) {
 		long time_start = System.nanoTime();
 		String result = "";
 		try {
-			ServerInstance instance = Pgx.getInstance("http://localhost:7007");
-			PgxSession session = instance.createSession("my-session");
 			PgxGraph graph = session.getGraph("Online Retail");
 			
 			Analyst analyst = session.createAnalyst();
@@ -163,7 +164,7 @@ public class Test {
 			PgxVertex<String> vertex = graph.getVertex(src_node_ids);
 			VertexSet<String> vertexSet = graph.createVertexSet();
 			vertexSet.add(vertex);
-			//graph.destroyVertexPropertyIfExists("pagerank");
+			graph.destroyVertexPropertyIfExists("pagerank");
 			analyst.personalizedPagerank(graph, vertexSet);
 			System.out.println("INFO: personalizedPagerank executed");
 
@@ -183,8 +184,6 @@ public class Test {
 				+ "   AND ID(dst) = '" + dst_node_ids + "'";
 			rs = graph.queryPgql(query);
 			result = getResultPG(rs, 2, 0, 1, 1, src_node_ids, list);
-
-			session.destroy();
 
 		} catch (ExecutionException e) {
 			result = printException(e);
