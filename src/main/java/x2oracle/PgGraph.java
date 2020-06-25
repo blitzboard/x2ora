@@ -41,14 +41,14 @@ class PgGraph {
 class PgNode {
   public String id;
   public Set<String> labels = new HashSet<String>();
-  public Map<String, String> properties = new HashMap<>();
+  public Map<String, Object> properties = new HashMap<>();
   public PgNode(String id) {
     this.id = id;
   }
   public void addLabel(String label) {
     labels.add(label);
   }
-  public void addProperty(String key, String value) {
+  public void addProperty(String key, Object value) {
     properties.put(key, value);
   }
 }

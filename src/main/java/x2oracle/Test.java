@@ -3,8 +3,6 @@ package x2oracle;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -20,7 +18,8 @@ public class Test {
 		
 		app.get("/node_match/", ctx -> ctx.result(getResult(
 			"node_match",
-			ctx.queryParam("node_ids"))));
+			ctx.queryParam("node_ids")
+			)));
 		app.get("/traversal/", ctx -> ctx.result(getResult(
 			"traversal",
 			ctx.queryParam("node_ids")//,
@@ -29,14 +28,15 @@ public class Test {
 			)));
 		app.get("/cycle/", ctx -> ctx.result(getResult(
 			"cycle",
-			ctx.queryParam("node_ids"))));
-		app.get("/path/shortest/", ctx -> ctx.result(getResult(
-			"path-shortest",
+			ctx.queryParam("node_ids")
+			)));
+		app.get("/path/shortest/", ctx -> ctx.result(runPathShortest(
 			ctx.queryParam("src_node_ids"),
-			ctx.queryParam("dst_node_ids"))));	
-		app.get("/compute/random_walk", ctx -> ctx.result(getResult(
-			"compute-random_walk",
-			ctx.queryParam("node_ids"))));
+			ctx.queryParam("dst_node_ids")
+			)));
+		app.get("/compute/random_walk", ctx -> ctx.result(runComputeRandomWalk(
+			ctx.queryParam("node_ids")
+			)));
 		app.get("/query/", ctx -> ctx.result(getResult(
 			"query",
 			ctx.queryParam("node_ids"))));
@@ -49,11 +49,12 @@ public class Test {
 			ServerInstance instance = Pgx.getInstance("http://localhost:7007");
 			PgxSession session = instance.createSession("my-session");
 			PgxGraph graph = session.getGraph("Online Retail");
-			
-			
+						
 			String query;
 			PgqlResultSet rs;
-			
+			Set<VertexProperty<?,?>> vertexProperties = graph.getVertexProperties();
+			List<VertexProperty<?,?>> list = new ArrayList<VertexProperty<?,?>>(vertexProperties);
+		
 			switch (endpoint) {
 			
 			case "node_match":
@@ -61,7 +62,7 @@ public class Test {
 						+ " WHERE ID(n) = " + node_ids
 						+ " ORDER BY n.pagerank DESC";
 				rs = graph.queryPgql(query);
-				result = getResultPG(rs, 2, 1, 0, 0, node_ids);
+				result = getResultPG(rs, 2, 1, 0, 0, node_ids, list);
 				break;
 			
 			case "traversal":
@@ -82,7 +83,7 @@ public class Test {
 						+ " MATCH (n0)-[e1]->(n1)-[e2]->(n2)-[e3]->(n3)-[e4]->(n4)-[e5]->(n5)-[e6]->(n6)"
 						+ " WHERE ID(n0) = " + node_ids;
 				rs = graph.queryPgql(query);
-				result = getResultPG(rs, 7, 6, 0, 0, node_ids);
+				result = getResultPG(rs, 7, 6, 0, 0, node_ids, list);
 				break;
 
 			case "cycle":
@@ -90,23 +91,9 @@ public class Test {
 				+ " MATCH TOP 2 SHORTEST ((n) (-[e:transfer]->(m))* (n)) WHERE ID(n) = "
 				+ node_ids;
 				rs = graph.queryPgql(query);
-				result = getResultPG(rs, 1, 0, 1, 1, node_ids);
+				result = getResultPG(rs, 1, 0, 1, 1, node_ids, list);
 				break;
 
-			case "compute-random_walk":
-				Analyst analyst = session.createAnalyst();
-				System.out.println("node_ids: " + node_ids);
-				PgxVertex<String> vertex = graph.getVertex(node_ids);
-				VertexSet<String> vertexSet = graph.createVertexSet();
-				vertexSet.add(vertex);
-				analyst.personalizedPagerank(graph, vertexSet);
-				query = "SELECT ID(n), LABEL(n), n.country, n.description"
-				        + " MATCH (n)"
-						+ " WHERE LABEL(n) = 'Product'"
-						+ " ORDER BY n.pagerank DESC LIMIT 10";
-				rs = graph.queryPgql(query);
-				result = getResultPG(rs, 1, 0, 0, 0, node_ids);
-				break;
 			}
 			session.destroy();
 			
@@ -120,8 +107,8 @@ public class Test {
 		System.out.println("Execution Time: " + (time_end - time_start)/1000/1000 + "ms");
 		return result;
 	}
-
-	private static String getResult(String endpoint, String src_node_ids, String dst_node_ids) {
+	
+	private static String runComputeRandomWalk(String node_ids) {
 		long time_start = System.nanoTime();
 		String result = "";
 		try {
@@ -129,49 +116,74 @@ public class Test {
 			PgxSession session = instance.createSession("my-session");
 			PgxGraph graph = session.getGraph("Online Retail");
 			
-			System.out.println(graph.getVertexProperties());
-			Set<VertexProperty<?,?>> vpl = graph.getVertexProperties();
-			System.out.println(vpl.size());
-			System.out.println(vpl.toArray());
+			Analyst analyst = session.createAnalyst();
+			System.out.println("node_ids: " + node_ids);
+			PgxVertex<String> vertex = graph.getVertex(node_ids);
+			VertexSet<String> vertexSet = graph.createVertexSet();
+			vertexSet.add(vertex);
+			analyst.personalizedPagerank(graph, vertexSet);
+			System.out.println("INFO: personalizedPagerank executed");
 
-			List<VertexProperty<?,?>> list = new ArrayList<VertexProperty<?,?>>(vpl);
-
-			//String[] node_props = new String[];
-			
-			//Iterator<VertexProperty<?,?>> it = vpl.iterator();
-
-			//while(it.hasNext()){
-			//	System.out.println(it.next());
-			//}
-
-			System.out.println(list.get(0));
-
-			vpl.forEach((VertexProperty<?,?> vp) -> {
-				System.out.println(vp);
-				System.out.println(vp.getName());
-				System.out.println(vp.getType().name());
-				//node_props[0][0] = vp.getName();
-				//node_props[0][1] = vp.getType();
-			});
+			Set<VertexProperty<?,?>> vertexProperties = graph.getVertexProperties();
+			List<VertexProperty<?,?>> list = new ArrayList<VertexProperty<?,?>>(vertexProperties);
 			
 			String query;
 			PgqlResultSet rs;
+
+			query = "SELECT ID(n), LABEL(n), n." + list.get(0).getName() + ", n." + list.get(1).getName() + ", n." + list.get(2).getName()
+					+ " MATCH (n)"
+					+ " WHERE LABEL(n) = 'Product'"
+					+ " ORDER BY n.pagerank DESC LIMIT 10";
+			rs = graph.queryPgql(query);
+			result = getResultPG(rs, 1, 0, 0, 0, node_ids, list);
+
+			session.destroy();
+
+		} catch (ExecutionException e) {
+			result = printException(e);
+		} catch (InterruptedException e) {
+			result = printException(e);
+		} finally {
+		}
+		long time_end = System.nanoTime();
+		System.out.println("Execution Time: " + (time_end - time_start)/1000/1000 + "ms");
+		return result;
+	}
+
+	private static String runPathShortest(String src_node_ids, String dst_node_ids) {
+		long time_start = System.nanoTime();
+		String result = "";
+		try {
+			ServerInstance instance = Pgx.getInstance("http://localhost:7007");
+			PgxSession session = instance.createSession("my-session");
+			PgxGraph graph = session.getGraph("Online Retail");
 			
-			switch (endpoint) {
-						
-			case "path-shortest":
-				query = "SELECT"
-				+ " ID(src), LABEL(src)," + " src." + list.get(0).getName() + "," + " src." + list.get(1).getName() + ","
-				+ " ID(dst), LABEL(dst)," + " dst." + list.get(0).getName() + "," + " dst." + list.get(1).getName() + ","
+			Analyst analyst = session.createAnalyst();
+			System.out.println("node_ids: " + src_node_ids);
+			PgxVertex<String> vertex = graph.getVertex(src_node_ids);
+			VertexSet<String> vertexSet = graph.createVertexSet();
+			vertexSet.add(vertex);
+			//graph.destroyVertexPropertyIfExists("pagerank");
+			analyst.personalizedPagerank(graph, vertexSet);
+			System.out.println("INFO: personalizedPagerank executed");
+
+			Set<VertexProperty<?,?>> vertexProperties = graph.getVertexProperties();
+			List<VertexProperty<?,?>> list = new ArrayList<VertexProperty<?,?>>(vertexProperties);
+			
+			String query;
+			PgqlResultSet rs;
+
+			query = "SELECT"
+				+ " ID(src), LABEL(src)," + " src." + list.get(0).getName() + "," + " src." + list.get(1).getName() + "," + " src." + list.get(2).getName() + ","
+				+ " ID(dst), LABEL(dst)," + " dst." + list.get(0).getName() + "," + " dst." + list.get(1).getName() + "," + " dst." + list.get(2).getName() + ","
 				+ " ARRAY_AGG(ID(m)), ARRAY_AGG(LABEL(m)),"
 				+ " ARRAY_AGG(ID(e)), ARRAY_AGG(LABEL(e))"
 				+ " MATCH TOP 10 SHORTEST ((src) (-[e]->(m))* (dst))"
 				+ " WHERE ID(src) = '" + src_node_ids + "'"
 				+ "   AND ID(dst) = '" + dst_node_ids + "'";
-				rs = graph.queryPgql(query);
-				result = getResultPG(rs, 2, 0, 1, 1, src_node_ids);
-				break;
-			}
+			rs = graph.queryPgql(query);
+			result = getResultPG(rs, 2, 0, 1, 1, src_node_ids, list);
+
 			session.destroy();
 
 		} catch (ExecutionException e) {
@@ -185,13 +197,13 @@ public class Test {
 		return result;
 	}
 	
-	private static String getResultPG(PgqlResultSet rs, int cnt_n, int cnt_e, int cnt_nl, int cnt_el, String node_ids) {
+	private static String getResultPG(PgqlResultSet rs, int cnt_n, int cnt_e, int cnt_nl, int cnt_el, String node_ids, List<VertexProperty<?,?>> list) {
 		PgGraph pg = new PgGraph();
 		pg.setName("test_graph");
 		try {
 			while (rs.next()) {
 
-				int length_n = 4;  // ID + Label
+				int length_n = 5;  // ID + Label
 				int length_e = 3;  // ID + Src Node ID + Dst Node ID
 				int length_nl = 2; // ID + Label
 
@@ -204,11 +216,19 @@ public class Test {
 					String label = rs.getString(i + 1);
 					addNodeById(pg, id, label);
 					PgNode node = pg.getNode(id);
-					if (rs.getString(i + 2) != null) {
-						node.addProperty("country", rs.getString(i + 2));
-					}
-					if (rs.getString(i + 3) != null) {
-						node.addProperty("description", rs.getString(i + 3));
+					for (int j = 0; j < list.size(); j++) {
+						String name = list.get(j).getName();
+						String type = list.get(j).getType().name();
+						if (type == "STRING") {
+							if (rs.getString(i + 2 + j) != null) {
+								node.addProperty(name, rs.getString(i + 2 + j));
+							}
+						}
+						if (type == "DOUBLE") {
+							if (rs.getDouble(i + 2 + j) != null) {
+								node.addProperty(name, rs.getDouble(i + 2 + j));
+							}
+						}
 					}
 				}
 				// Edges
