@@ -103,7 +103,7 @@ public class Test {
 		} finally {
 		}
 		long time_end = System.nanoTime();
-		System.out.println("Execution Time: " + (time_end - time_start)/1000/1000 + "ms");
+		System.out.println("INFO: Execution Time: " + (time_end - time_start)/1000/1000 + "ms");
 		return result;
 	}
 	
@@ -114,7 +114,7 @@ public class Test {
 			PgxGraph graph = session.getGraph("Online Retail");
 			
 			Analyst analyst = session.createAnalyst();
-			System.out.println("node_ids: " + node_ids);
+			System.out.println("INFO: node_ids: " + node_ids);
 			PgxVertex<String> vertex = graph.getVertex(node_ids);
 			VertexSet<String> vertexSet = graph.createVertexSet();
 			vertexSet.add(vertex);
@@ -129,7 +129,7 @@ public class Test {
 		} finally {
 		}
 		long time_end = System.nanoTime();
-		System.out.println("Execution Time: " + (time_end - time_start)/1000/1000 + "ms");
+		System.out.println("INFO: Execution Time: " + (time_end - time_start)/1000/1000 + "ms");
 		result = "{\"status\":\"success\"}";
 		return result;
 	}
@@ -160,7 +160,7 @@ public class Test {
 		} finally {
 		}
 		long time_end = System.nanoTime();
-		System.out.println("Execution Time: " + (time_end - time_start)/1000/1000 + "ms");
+		System.out.println("INFO: Execution Time: " + (time_end - time_start)/1000/1000 + "ms");
 		return result;
 	}
 
@@ -176,6 +176,12 @@ public class Test {
 			String query;
 			PgqlResultSet rs;
 
+			List<String> dst_node_id_list = new ArrayList<String>();
+			for (String dst_node_id : dst_node_ids.split(",")) {
+				dst_node_id_list.add("'" + dst_node_id + "'");
+			}
+			String str_dst_node_id_list = String.join(",", dst_node_id_list);
+
 			query = "SELECT"
 				+ " ID(src), LABEL(src)," + " src." + list.get(0).getName() + "," + " src." + list.get(1).getName() + "," + " src." + list.get(2).getName() + ","
 				+ " ID(dst), LABEL(dst)," + " dst." + list.get(0).getName() + "," + " dst." + list.get(1).getName() + "," + " dst." + list.get(2).getName() + ","
@@ -183,7 +189,8 @@ public class Test {
 				+ " ARRAY_AGG(ID(e)), ARRAY_AGG(LABEL(e))"
 				+ " MATCH TOP 10 SHORTEST ((src) (-[e]->(m))* (dst))"
 				+ " WHERE ID(src) = '" + src_node_ids + "'"
-				+ "   AND ID(dst) = '" + dst_node_ids + "'";
+				+ "   AND ID(dst) IN (" + str_dst_node_id_list + ")";
+			System.out.println("INFO: Query: \n\n" + query + "\n");
 			rs = graph.queryPgql(query);
 			result = getResultPG(rs, 2, 0, 1, 1, src_node_ids, list);
 
@@ -194,7 +201,7 @@ public class Test {
 		} finally {
 		}
 		long time_end = System.nanoTime();
-		System.out.println("Execution Time: " + (time_end - time_start)/1000/1000 + "ms");
+		System.out.println("INFO: Execution Time: " + (time_end - time_start)/1000/1000 + "ms");
 		return result;
 	}
 	
