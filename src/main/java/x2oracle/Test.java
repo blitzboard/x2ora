@@ -21,57 +21,62 @@ public class Test {
 
 		app.get("/node_match/", ctx -> ctx.result(
 				runNodeMatch(session, ctx.queryParam("labels"), ctx.queryParam("order_by"), ctx.queryParam("limit"))));
-
 		app.get("/custom/recommendation/",
 				ctx -> ctx.result(runCustomRecommendation(session, ctx.queryParam("node_ids"), ctx.queryParam("labels"),
 						ctx.queryParam("order_by"), ctx.queryParam("limit"))));
-
-		app.get("/traversal/", ctx -> ctx.result(getResult(session, "traversal", ctx.queryParam("node_ids")// ,
-		// ctx.queryParam("min_hops"),
-		// ctx.queryParam("max_hops")
-		)));
-		app.get("/cycle/", ctx -> ctx.result(getResult(session, "cycle", ctx.queryParam("node_ids"))));
+		app.get("/traversal/", ctx -> ctx.result(runTraversal(session, "traversal", ctx.queryParam("node_ids"))));
+		app.get("/cycle/", ctx -> ctx.result(runCycle(session, "cycle", ctx.queryParam("node_ids"))));
 		app.get("/path/shortest/", ctx -> ctx
 				.result(runPathShortest(session, ctx.queryParam("src_node_ids"), ctx.queryParam("dst_node_ids"))));
-
 		app.get("/compute/random_walk", ctx -> ctx.result(runComputeRandomWalk(session, ctx.queryParam("node_ids"))));
-		app.get("/query/", ctx -> ctx.result(getResult(session, "query", ctx.queryParam("node_ids"))));
 	}
 
-	private static String getResult(PgxSession session, String endpoint, String node_ids) {
+	private static String runTraversal(PgxSession session, String endpoint, String node_ids) {
 		long time_start = System.nanoTime();
 		String result = "";
 		try {
 			PgxGraph graph = session.getGraph("Online Retail");
 
-			String query;
-			PgqlResultSet rs;
 			Set<VertexProperty<?, ?>> vertexProperties = graph.getVertexProperties();
 			List<VertexProperty<?, ?>> list = new ArrayList<VertexProperty<?, ?>>(vertexProperties);
 
-			switch (endpoint) {
+			String query;
+			query = "SELECT DISTINCT" + " ID(n0), LABEL(n0)," + " ID(n1), LABEL(n1)," + " ID(n2), LABEL(n2),"
+					+ " ID(n3), LABEL(n3)," + " ID(n4), LABEL(n4)," + " ID(n5), LABEL(n5),"
+					+ " ID(n6), LABEL(n6)," + " ID(e1), ID(n0) AS e1s, ID(n1) AS e1d,"
+					+ " ID(e2), ID(n1) AS e2s, ID(n2) AS e2d," + " ID(e3), ID(n2) AS e3s, ID(n3) AS e3d,"
+					+ " ID(e4), ID(n3) AS e4s, ID(n4) AS e4d," + " ID(e5), ID(n4) AS e5s, ID(n5) AS e5d,"
+					+ " ID(e6), ID(n5) AS e6s, ID(n6) AS e6d"
+					+ " MATCH (n0)-[e1]->(n1)-[e2]->(n2)-[e3]->(n3)-[e4]->(n4)-[e5]->(n5)-[e6]->(n6)"
+					+ " WHERE ID(n0) = " + node_ids;
+			PgqlResultSet rs = graph.queryPgql(query);
+			result = getResultPG(rs, 7, 6, 0, 0, node_ids, list);
 
-				case "traversal":
-					query = "SELECT DISTINCT" + " ID(n0), LABEL(n0)," + " ID(n1), LABEL(n1)," + " ID(n2), LABEL(n2),"
-							+ " ID(n3), LABEL(n3)," + " ID(n4), LABEL(n4)," + " ID(n5), LABEL(n5),"
-							+ " ID(n6), LABEL(n6)," + " ID(e1), ID(n0) AS e1s, ID(n1) AS e1d,"
-							+ " ID(e2), ID(n1) AS e2s, ID(n2) AS e2d," + " ID(e3), ID(n2) AS e3s, ID(n3) AS e3d,"
-							+ " ID(e4), ID(n3) AS e4s, ID(n4) AS e4d," + " ID(e5), ID(n4) AS e5s, ID(n5) AS e5d,"
-							+ " ID(e6), ID(n5) AS e6s, ID(n6) AS e6d"
-							+ " MATCH (n0)-[e1]->(n1)-[e2]->(n2)-[e3]->(n3)-[e4]->(n4)-[e5]->(n5)-[e6]->(n6)"
-							+ " WHERE ID(n0) = " + node_ids;
-					rs = graph.queryPgql(query);
-					result = getResultPG(rs, 7, 6, 0, 0, node_ids, list);
-					break;
+		} catch (ExecutionException e) {
+			result = printException(e);
+		} catch (InterruptedException e) {
+			result = printException(e);
+		} finally {
+		}
+		long time_end = System.nanoTime();
+		System.out.println("INFO: Execution Time: " + (time_end - time_start) / 1000 / 1000 + "ms");
+		return result;
+	}
 
-				case "cycle":
-					query = "SELECT ID(n), LABEL(n), ARRAY_AGG(ID(m)), ARRAY_AGG(ID(e))"
-							+ " MATCH TOP 2 SHORTEST ((n) (-[e:transfer]->(m))* (n)) WHERE ID(n) = " + node_ids;
-					rs = graph.queryPgql(query);
-					result = getResultPG(rs, 1, 0, 1, 1, node_ids, list);
-					break;
+	private static String runCycle(PgxSession session, String endpoint, String node_ids) {
+		long time_start = System.nanoTime();
+		String result = "";
+		try {
+			PgxGraph graph = session.getGraph("Online Retail");
 
-			}
+			Set<VertexProperty<?, ?>> vertexProperties = graph.getVertexProperties();
+			List<VertexProperty<?, ?>> list = new ArrayList<VertexProperty<?, ?>>(vertexProperties);
+
+			String query;
+			query = "SELECT ID(n), LABEL(n), ARRAY_AGG(ID(m)), ARRAY_AGG(ID(e))"
+					+ " MATCH TOP 2 SHORTEST ((n) (-[e:transfer]->(m))* (n)) WHERE ID(n) = " + node_ids;
+			PgqlResultSet rs = graph.queryPgql(query);
+			result = getResultPG(rs, 1, 0, 1, 1, node_ids, list);
 
 		} catch (ExecutionException e) {
 			result = printException(e);
