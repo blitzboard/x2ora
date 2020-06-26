@@ -22,8 +22,9 @@ public class Test {
 		app.get("/node_match/", ctx -> ctx.result(
 				runNodeMatch(session, ctx.queryParam("labels"), ctx.queryParam("order_by"), ctx.queryParam("limit"))));
 
-		app.get("/custom/recommendation/", ctx -> ctx.result(
-				runCustomRecommendation(session, ctx.queryParam("node_ids"), ctx.queryParam("labels"), ctx.queryParam("order_by"), ctx.queryParam("limit"))));
+		app.get("/custom/recommendation/",
+				ctx -> ctx.result(runCustomRecommendation(session, ctx.queryParam("node_ids"), ctx.queryParam("labels"),
+						ctx.queryParam("order_by"), ctx.queryParam("limit"))));
 
 		app.get("/traversal/", ctx -> ctx.result(getResult(session, "traversal", ctx.queryParam("node_ids")// ,
 		// ctx.queryParam("min_hops"),
@@ -32,6 +33,7 @@ public class Test {
 		app.get("/cycle/", ctx -> ctx.result(getResult(session, "cycle", ctx.queryParam("node_ids"))));
 		app.get("/path/shortest/", ctx -> ctx
 				.result(runPathShortest(session, ctx.queryParam("src_node_ids"), ctx.queryParam("dst_node_ids"))));
+
 		app.get("/compute/random_walk", ctx -> ctx.result(runComputeRandomWalk(session, ctx.queryParam("node_ids"))));
 		app.get("/query/", ctx -> ctx.result(getResult(session, "query", ctx.queryParam("node_ids"))));
 	}
@@ -118,13 +120,15 @@ public class Test {
 			Set<VertexProperty<?, ?>> vertexProperties = graph.getVertexProperties();
 			List<VertexProperty<?, ?>> list = new ArrayList<VertexProperty<?, ?>>(vertexProperties);
 
-			String query;
-			PgqlResultSet rs;
+			String query = "";
+			query = query.concat("SELECT " + strNode("n", list) + "\n");
+			query = query.concat(" MATCH (n)" + "\n");
+			query = query.concat(" WHERE LABEL(n) = '" + labels + "'" + "\n");
+			query = query.concat(" ORDER BY n." + order_by + " DESC" + "\n");
+			query = query.concat(" LIMIT " + limit);
+			System.out.println("INFO: Query: \n\n" + query + "\n");
 
-			query = "SELECT ID(n), LABEL(n), n." + list.get(0).getName() + ", n." + list.get(1).getName() + ", n."
-					+ list.get(2).getName() + " MATCH (n)" + " WHERE LABEL(n) = '" + labels + "'" + " ORDER BY n."
-					+ order_by + " DESC LIMIT " + limit;
-			rs = graph.queryPgql(query);
+			PgqlResultSet rs = graph.queryPgql(query);
 			result = getResultPG(rs, 1, 0, 0, 0, "", list);
 
 		} catch (ExecutionException e) {
@@ -148,15 +152,17 @@ public class Test {
 			Set<VertexProperty<?, ?>> vertexProperties = graph.getVertexProperties();
 			List<VertexProperty<?, ?>> list = new ArrayList<VertexProperty<?, ?>>(vertexProperties);
 
-			String query;
-			PgqlResultSet rs;
-
-			query = "SELECT ID(n), LABEL(n), n." + list.get(0).getName() + ", n." + list.get(1).getName() + ", n."
-					+ list.get(2).getName() + " MATCH (n)" + " WHERE LABEL(n) = '" + labels + "'" + " AND NOT EXISTS ("
-					+ "	  SELECT *" + "   MATCH (n)-[:purchased_by]->(a)" + "   WHERE ID(a) = '" + node_ids + "'"
-					+ "   )" + " ORDER BY n." + order_by + " DESC LIMIT " + limit;
+			String query = "";
+			query = query.concat("SELECT " + strNode("n", list) + "\n");
+			query = query.concat(" MATCH (n)" + "\n");
+			query = query.concat(" WHERE LABEL(n) = '" + labels + "'" + "\n");
+			query = query.concat("   AND NOT EXISTS (" + "	  SELECT *" + "   MATCH (n)-[:purchased_by]->(a)"
+					+ "   WHERE ID(a) = '" + node_ids + "'" + "   )");
+			query = query.concat(" ORDER BY n." + order_by + " DESC" + "\n");
+			query = query.concat(" LIMIT " + limit);
 			System.out.println("INFO: Query: \n\n" + query + "\n");
-			rs = graph.queryPgql(query);
+
+			PgqlResultSet rs = graph.queryPgql(query);
 			result = getResultPG(rs, 1, 0, 0, 0, "", list);
 
 		} catch (ExecutionException e) {
@@ -180,22 +186,15 @@ public class Test {
 			List<VertexProperty<?, ?>> list = new ArrayList<VertexProperty<?, ?>>(vertexProperties);
 
 			String query;
-			PgqlResultSet rs;
-
-			List<String> dst_node_id_list = new ArrayList<String>();
-			for (String dst_node_id : dst_node_ids.split(",")) {
-				dst_node_id_list.add("'" + dst_node_id + "'");
-			}
-			String str_dst_node_id_list = String.join(",", dst_node_id_list);
-
 			query = "SELECT" + " ID(src), LABEL(src)," + " src." + list.get(0).getName() + "," + " src."
 					+ list.get(1).getName() + "," + " src." + list.get(2).getName() + "," + " ID(dst), LABEL(dst),"
 					+ " dst." + list.get(0).getName() + "," + " dst." + list.get(1).getName() + "," + " dst."
 					+ list.get(2).getName() + "," + " ARRAY_AGG(ID(m)), ARRAY_AGG(LABEL(m)),"
 					+ " ARRAY_AGG(ID(e)), ARRAY_AGG(LABEL(e))" + " MATCH TOP 10 SHORTEST ((src) (-[e]->(m))* (dst))"
-					+ " WHERE ID(src) = '" + src_node_ids + "'" + "   AND ID(dst) IN (" + str_dst_node_id_list + ")";
+					+ " WHERE ID(src) = '" + src_node_ids + "'" + "   AND ID(dst) IN (" + strList(dst_node_ids) + ")";
 			System.out.println("INFO: Query: \n\n" + query + "\n");
-			rs = graph.queryPgql(query);
+
+			PgqlResultSet rs = graph.queryPgql(query);
 			result = getResultPG(rs, 2, 0, 1, 1, src_node_ids, list);
 
 		} catch (ExecutionException e) {
@@ -272,6 +271,25 @@ public class Test {
 			e.printStackTrace();
 		}
 		return pg.exportJSON();
+	}
+
+	private static String strNode(String symbol, List<VertexProperty<?, ?>> list) {
+		String strID = "ID(" + symbol + ")";
+		String strLabel = "LABEL(" + symbol + ")";
+		List<String> listProperties = new ArrayList<String>();
+		for (int i = 0; i < list.size(); i++) {
+			listProperties.add(symbol + "." + list.get(i).getName());
+		}
+		String strProperties = String.join(", ", listProperties);
+		return strID + ", " + strLabel + ", " + strProperties;
+	}
+
+	private static String strList(String elements) {
+		List<String> element_list = new ArrayList<String>();
+		for (String element : elements.split(",")) {
+			element_list.add("'" + element + "'");
+		}
+		return String.join(",", element_list);
 	}
 
 	private static String printException(Exception e) {
