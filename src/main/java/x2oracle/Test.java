@@ -35,12 +35,12 @@ public class Test {
 		long time_start = System.nanoTime();
 		String result = "";
 		try {
-			PgxGraph graph = session.getGraph("Online Retail");
+			PgxGraph graph = session.getGraph("Cycle");
 
 			Set<VertexProperty<?, ?>> vertexProperties = graph.getVertexProperties();
 			List<VertexProperty<?, ?>> list = new ArrayList<VertexProperty<?, ?>>(vertexProperties);
 
-			String query;
+			String query = "";
 			query = "SELECT DISTINCT" + " ID(n0), LABEL(n0)," + " ID(n1), LABEL(n1)," + " ID(n2), LABEL(n2),"
 					+ " ID(n3), LABEL(n3)," + " ID(n4), LABEL(n4)," + " ID(n5), LABEL(n5),"
 					+ " ID(n6), LABEL(n6)," + " ID(e1), ID(n0) AS e1s, ID(n1) AS e1d,"
@@ -67,14 +67,18 @@ public class Test {
 		long time_start = System.nanoTime();
 		String result = "";
 		try {
-			PgxGraph graph = session.getGraph("Online Retail");
+			PgxGraph graph = session.getGraph("Cycle");
 
 			Set<VertexProperty<?, ?>> vertexProperties = graph.getVertexProperties();
 			List<VertexProperty<?, ?>> list = new ArrayList<VertexProperty<?, ?>>(vertexProperties);
 
-			String query;
-			query = "SELECT ID(n), LABEL(n), ARRAY_AGG(ID(m)), ARRAY_AGG(ID(e))"
-					+ " MATCH TOP 2 SHORTEST ((n) (-[e:transfer]->(m))* (n)) WHERE ID(n) = " + node_ids;
+			String query = "";
+			query = query.concat("SELECT " + strNode("n", list) + "\n");
+			query = query.concat("       ARRAY_AGG(ID(m)), ARRAY_AGG(LABEL(m))," + "\n");
+			query = query.concat("       ARRAY_AGG(ID(e)), ARRAY_AGG(LABEL(e))" + "\n");
+			query = query.concat(" MATCH TOP 2 SHORTEST ((n) (-[e:transfer]->(m))* (n))" + "\n");
+			query = query.concat(" WHERE ID(n) = " + node_ids + "\n");
+			System.out.println("INFO: Query: \n\n" + query + "\n");
 			PgqlResultSet rs = graph.queryPgql(query);
 			result = getResultPG(rs, 1, 0, 1, 1, node_ids, list);
 
@@ -190,13 +194,14 @@ public class Test {
 			Set<VertexProperty<?, ?>> vertexProperties = graph.getVertexProperties();
 			List<VertexProperty<?, ?>> list = new ArrayList<VertexProperty<?, ?>>(vertexProperties);
 
-			String query;
-			query = "SELECT" + " ID(src), LABEL(src)," + " src." + list.get(0).getName() + "," + " src."
-					+ list.get(1).getName() + "," + " src." + list.get(2).getName() + "," + " ID(dst), LABEL(dst),"
-					+ " dst." + list.get(0).getName() + "," + " dst." + list.get(1).getName() + "," + " dst."
-					+ list.get(2).getName() + "," + " ARRAY_AGG(ID(m)), ARRAY_AGG(LABEL(m)),"
-					+ " ARRAY_AGG(ID(e)), ARRAY_AGG(LABEL(e))" + " MATCH TOP 10 SHORTEST ((src) (-[e]->(m))* (dst))"
-					+ " WHERE ID(src) = '" + src_node_ids + "'" + "   AND ID(dst) IN (" + strList(dst_node_ids) + ")";
+			String query = "";
+			query = query.concat("SELECT " + strNode("src", list) + "\n");
+			query = query.concat("     , " + strNode("dst", list) + "\n");
+			query = query.concat("     , ARRAY_AGG(ID(m)), ARRAY_AGG(LABEL(m))" + "\n");
+			query = query.concat("     , ARRAY_AGG(ID(e)), ARRAY_AGG(LABEL(e))" + "\n");
+			query = query.concat(" MATCH TOP 10 SHORTEST ((src) (-[e]->(m))* (dst))" + "\n");
+			query = query.concat(" WHERE ID(src) = '" + src_node_ids + "'" + "\n");
+			query = query.concat("   AND ID(dst) IN (" + strList(dst_node_ids) + ")");
 			System.out.println("INFO: Query: \n\n" + query + "\n");
 
 			PgqlResultSet rs = graph.queryPgql(query);
@@ -214,13 +219,13 @@ public class Test {
 	}
 
 	private static String getResultPG(PgqlResultSet rs, int cnt_n, int cnt_e, int cnt_nl, int cnt_el, String node_ids,
-			List<VertexProperty<?, ?>> list) {
+			List<VertexProperty<?, ?>> list_vp) {
 		PgGraph pg = new PgGraph();
 		pg.setName("test_graph");
 		try {
 			while (rs.next()) {
 
-				int length_n = 5; // ID + Label
+				int length_n = list_vp.size() + 2; // Properties + ID + Label
 				int length_e = 3; // ID + Src Node ID + Dst Node ID
 				int length_nl = 2; // ID + Label
 
@@ -229,13 +234,13 @@ public class Test {
 
 				// Nodes
 				for (int i = 1; i <= offset_e; i = i + length_n) {
-					String id = rs.getString(i);
+					Object id = rs.getObject(i);
 					String label = rs.getString(i + 1);
 					addNodeById(pg, id, label);
 					PgNode node = pg.getNode(id);
-					for (int j = 0; j < list.size(); j++) {
-						String name = list.get(j).getName();
-						String type = list.get(j).getType().name();
+					for (int j = 0; j < list_vp.size(); j++) {
+						String name = list_vp.get(j).getName();
+						String type = list_vp.get(j).getType().name();
 						if (type == "STRING") {
 							if (rs.getString(i + 2 + j) != null) {
 								node.addProperty(name, rs.getString(i + 2 + j));
@@ -250,23 +255,23 @@ public class Test {
 				}
 				// Edges
 				for (int i = offset_e + 1; i <= offset_nl; i = i + length_e) {
-					addEdgeByIds(pg, rs.getString(i), rs.getString(i + 1), rs.getString(i + 2), "transfer");
+					addEdgeByIds(pg, rs.getObject(i), rs.getObject(i + 1), rs.getObject(i + 2), "transfer");
 				}
 				// Node List + Edge List
 				for (int i = offset_nl + 1; i <= offset_nl + cnt_nl; i++) {
 					if (rs.getList(i) != null) {
-						String node_src = node_ids;
-						String node_dst;
+						Object node_src = node_ids;
+						Object node_dst;
 						String node_dst_label;
-						Long edge;
+						Object edge;
 						String edge_label;
 						for (int j = 0; j < rs.getList(i).size(); j++) {
-							node_dst = (String) rs.getList(i).get(j);
+							node_dst = rs.getList(i).get(j);
 							node_dst_label = (String) rs.getList(i + 1).get(j);
-							edge = (Long) rs.getList(i + cnt_nl * length_nl).get(j);
+							edge = rs.getList(i + cnt_nl * length_nl).get(j);
 							edge_label = (String) rs.getList(i + cnt_nl * length_nl + 1).get(j);
 							addNodeById(pg, node_dst, node_dst_label);
-							addEdgeByIds(pg, edge.toString(), node_src, node_dst, edge_label);
+							addEdgeByIds(pg, edge, node_src, node_dst, edge_label);
 							node_src = node_dst;
 						}
 					}
@@ -306,13 +311,13 @@ public class Test {
 		return sw.toString();
 	}
 
-	private static void addNodeById(PgGraph pg, String id, String label) {
+	private static void addNodeById(PgGraph pg, Object id, String label) {
 		PgNode node = new PgNode(id);
 		node.addLabel(label);
 		pg.addNode(id, node);
 	}
 
-	private static void addEdgeByIds(PgGraph pg, String id, String id_s, String id_d, String label) {
+	private static void addEdgeByIds(PgGraph pg, Object id, Object id_s, Object id_d, String label) {
 		PgEdge edge = new PgEdge(id_s, id_d, false);
 		edge.addLabel(label);
 		pg.addEdge(id, edge);
