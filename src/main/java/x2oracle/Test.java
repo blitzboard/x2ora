@@ -24,15 +24,15 @@ public class Test {
 		app.get("/custom/recommendation/",
 				ctx -> ctx.result(runCustomRecommendation(session, ctx.queryParam("node_ids"), ctx.queryParam("labels"),
 						ctx.queryParam("order_by"), ctx.queryParam("limit"))));
-		app.get("/traversal/", ctx -> ctx.result(runTraversal(session, "traversal", ctx.queryParam("node_ids"))));
-		app.get("/cycle/", ctx -> ctx.result(runCycle(session, "cycle", ctx.queryParam("node_ids"))));
+		app.get("/traversal/", ctx -> ctx.result(runTraversal(session, ctx.queryParam("node_ids"))));
+		app.get("/cycle/", ctx -> ctx.result(runCycle(session, ctx.queryParam("node_ids"))));
 		app.get("/path/shortest/", ctx -> ctx
 				.result(runPathShortest(session, ctx.queryParam("src_node_ids"), ctx.queryParam("dst_node_ids"))));
 		app.get("/compute/random_walk", ctx -> ctx.result(runComputeRandomWalk(session, ctx.queryParam("node_ids"))));
 	}
 
-	private static String runTraversal(PgxSession session, String endpoint, String node_ids) {
-		long time_start = System.nanoTime();
+	private static String runTraversal(PgxSession session, String strNodeID) {
+		long timeStart = System.nanoTime();
 		String result = "";
 		try {
 			PgxGraph graph = session.getGraph("Cycle");
@@ -48,9 +48,9 @@ public class Test {
 					+ " ID(e4), ID(n3) AS e4s, ID(n4) AS e4d," + " ID(e5), ID(n4) AS e5s, ID(n5) AS e5d,"
 					+ " ID(e6), ID(n5) AS e6s, ID(n6) AS e6d"
 					+ " MATCH (n0)-[e1]->(n1)-[e2]->(n2)-[e3]->(n3)-[e4]->(n4)-[e5]->(n5)-[e6]->(n6)"
-					+ " WHERE ID(n0) = " + node_ids;
+					+ " WHERE ID(n0) = " + strNodeID;
 			PgqlResultSet rs = graph.queryPgql(query);
-			result = getResultPG(rs, 7, 6, 0, 0, node_ids, list);
+			result = getResultPG(rs, 7, 6, 0, 0, strNodeID, list);
 
 		} catch (ExecutionException e) {
 			result = printException(e);
@@ -58,13 +58,13 @@ public class Test {
 			result = printException(e);
 		} finally {
 		}
-		long time_end = System.nanoTime();
-		System.out.println("INFO: Execution Time: " + (time_end - time_start) / 1000 / 1000 + "ms");
+		long timeEnd = System.nanoTime();
+		System.out.println("INFO: Execution Time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms");
 		return result;
 	}
 
-	private static String runCycle(PgxSession session, String endpoint, String node_ids) {
-		long time_start = System.nanoTime();
+	private static String runCycle(PgxSession session, String strNodeID) {
+		long timeStart = System.nanoTime();
 		String result = "";
 		try {
 			PgxGraph graph = session.getGraph("Cycle");
@@ -77,10 +77,10 @@ public class Test {
 			query = query.concat("       ARRAY_AGG(ID(m)), ARRAY_AGG(LABEL(m))," + "\n");
 			query = query.concat("       ARRAY_AGG(ID(e)), ARRAY_AGG(LABEL(e))" + "\n");
 			query = query.concat(" MATCH TOP 2 SHORTEST ((n) (-[e:transfer]->(m))* (n))" + "\n");
-			query = query.concat(" WHERE ID(n) = " + node_ids + "\n");
+			query = query.concat(" WHERE ID(n) = " + strNodeID + "\n");
 			System.out.println("INFO: Query: \n\n" + query + "\n");
 			PgqlResultSet rs = graph.queryPgql(query);
-			result = getResultPG(rs, 1, 0, 1, 1, node_ids, list);
+			result = getResultPG(rs, 1, 0, 1, 1, strNodeID, list);
 
 		} catch (ExecutionException e) {
 			result = printException(e);
@@ -88,20 +88,20 @@ public class Test {
 			result = printException(e);
 		} finally {
 		}
-		long time_end = System.nanoTime();
-		System.out.println("INFO: Execution Time: " + (time_end - time_start) / 1000 / 1000 + "ms");
+		long timeEnd = System.nanoTime();
+		System.out.println("INFO: Execution Time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms");
 		return result;
 	}
 
-	private static String runComputeRandomWalk(PgxSession session, String node_ids) {
-		long time_start = System.nanoTime();
+	private static String runComputeRandomWalk(PgxSession session, String strNodeID) {
+		long timeStart = System.nanoTime();
 		String result = "";
 		try {
 			PgxGraph graph = session.getGraph("Online Retail");
 
 			Analyst analyst = session.createAnalyst();
-			System.out.println("INFO: node_ids: " + node_ids);
-			PgxVertex<String> vertex = graph.getVertex(node_ids);
+			System.out.println("INFO: node_ids: " + strNodeID);
+			PgxVertex<String> vertex = graph.getVertex(strNodeID);
 			VertexSet<String> vertexSet = graph.createVertexSet();
 			vertexSet.add(vertex);
 			graph.destroyVertexPropertyIfExists("pagerank");
@@ -114,14 +114,14 @@ public class Test {
 			result = printException(e);
 		} finally {
 		}
-		long time_end = System.nanoTime();
-		System.out.println("INFO: Execution Time: " + (time_end - time_start) / 1000 / 1000 + "ms");
+		long timeEnd = System.nanoTime();
+		System.out.println("INFO: Execution Time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms");
 		result = "{\"status\":\"success\"}";
 		return result;
 	}
 
-	private static String runNodeMatch(PgxSession session, String labels, String order_by, String limit) {
-		long time_start = System.nanoTime();
+	private static String runNodeMatch(PgxSession session, String strLabel, String strOrderBy, String strLimit) {
+		long timeStart = System.nanoTime();
 		String result = "";
 		try {
 			PgxGraph graph = session.getGraph("Online Retail");
@@ -132,9 +132,9 @@ public class Test {
 			String query = "";
 			query = query.concat("SELECT " + strNode("n", list) + "\n");
 			query = query.concat(" MATCH (n)" + "\n");
-			query = query.concat(" WHERE LABEL(n) = '" + labels + "'" + "\n");
-			query = query.concat(" ORDER BY n." + order_by + " DESC" + "\n");
-			query = query.concat(" LIMIT " + limit);
+			query = query.concat(" WHERE LABEL(n) = '" + strLabel + "'" + "\n");
+			query = query.concat(" ORDER BY n." + strOrderBy + " DESC" + "\n");
+			query = query.concat(" LIMIT " + strLimit);
 			System.out.println("INFO: Query: \n\n" + query + "\n");
 
 			PgqlResultSet rs = graph.queryPgql(query);
@@ -146,14 +146,14 @@ public class Test {
 			result = printException(e);
 		} finally {
 		}
-		long time_end = System.nanoTime();
-		System.out.println("INFO: Execution Time: " + (time_end - time_start) / 1000 / 1000 + "ms");
+		long timeEnd = System.nanoTime();
+		System.out.println("INFO: Execution Time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms");
 		return result;
 	}
 
-	private static String runCustomRecommendation(PgxSession session, String node_ids, String labels, String order_by,
-			String limit) {
-		long time_start = System.nanoTime();
+	private static String runCustomRecommendation(PgxSession session, String strNodeID, String strLabel, String strOrderBy,
+			String strLimit) {
+		long timeStart = System.nanoTime();
 		String result = "";
 		try {
 			PgxGraph graph = session.getGraph("Online Retail");
@@ -164,11 +164,11 @@ public class Test {
 			String query = "";
 			query = query.concat("SELECT " + strNode("n", list) + "\n");
 			query = query.concat(" MATCH (n)" + "\n");
-			query = query.concat(" WHERE LABEL(n) = '" + labels + "'" + "\n");
+			query = query.concat(" WHERE LABEL(n) = '" + strLabel + "'" + "\n");
 			query = query.concat("   AND NOT EXISTS (" + "	  SELECT *" + "   MATCH (n)-[:purchased_by]->(a)"
-					+ "   WHERE ID(a) = '" + node_ids + "'" + "   )");
-			query = query.concat(" ORDER BY n." + order_by + " DESC" + "\n");
-			query = query.concat(" LIMIT " + limit);
+					+ "   WHERE ID(a) = '" + strNodeID + "'" + "   )");
+			query = query.concat(" ORDER BY n." + strOrderBy + " DESC" + "\n");
+			query = query.concat(" LIMIT " + strLimit);
 			System.out.println("INFO: Query: \n\n" + query + "\n");
 
 			PgqlResultSet rs = graph.queryPgql(query);
@@ -180,13 +180,13 @@ public class Test {
 			result = printException(e);
 		} finally {
 		}
-		long time_end = System.nanoTime();
-		System.out.println("INFO: Execution Time: " + (time_end - time_start) / 1000 / 1000 + "ms");
+		long timeEnd = System.nanoTime();
+		System.out.println("INFO: Execution Time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms");
 		return result;
 	}
 
-	private static String runPathShortest(PgxSession session, String src_node_ids, String dst_node_ids) {
-		long time_start = System.nanoTime();
+	private static String runPathShortest(PgxSession session, String strNodeSrcID, String strNodeDstIDs) {
+		long timeStart = System.nanoTime();
 		String result = "";
 		try {
 			PgxGraph graph = session.getGraph("Online Retail");
@@ -200,12 +200,12 @@ public class Test {
 			query = query.concat("     , ARRAY_AGG(ID(m)), ARRAY_AGG(LABEL(m))" + "\n");
 			query = query.concat("     , ARRAY_AGG(ID(e)), ARRAY_AGG(LABEL(e))" + "\n");
 			query = query.concat(" MATCH TOP 10 SHORTEST ((src) (-[e]->(m))* (dst))" + "\n");
-			query = query.concat(" WHERE ID(src) = '" + src_node_ids + "'" + "\n");
-			query = query.concat("   AND ID(dst) IN (" + strList(dst_node_ids) + ")");
+			query = query.concat(" WHERE ID(src) = '" + strNodeSrcID + "'" + "\n");
+			query = query.concat("   AND ID(dst) IN (" + strList(strNodeDstIDs) + ")");
 			System.out.println("INFO: Query: \n\n" + query + "\n");
 
 			PgqlResultSet rs = graph.queryPgql(query);
-			result = getResultPG(rs, 2, 0, 1, 1, src_node_ids, list);
+			result = getResultPG(rs, 2, 0, 1, 1, strNodeSrcID, list);
 
 		} catch (ExecutionException e) {
 			result = printException(e);
@@ -213,34 +213,34 @@ public class Test {
 			result = printException(e);
 		} finally {
 		}
-		long time_end = System.nanoTime();
-		System.out.println("INFO: Execution Time: " + (time_end - time_start) / 1000 / 1000 + "ms");
+		long timeEnd = System.nanoTime();
+		System.out.println("INFO: Execution Time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms");
 		return result;
 	}
 
-	private static String getResultPG(PgqlResultSet rs, int cnt_n, int cnt_e, int cnt_nl, int cnt_el, String node_ids,
-			List<VertexProperty<?, ?>> list_vp) {
+	private static String getResultPG(PgqlResultSet rs, int countNode, int countEdge, int countNodeList, int countEdgeList, String strNodeID,
+			List<VertexProperty<?, ?>> listVertexProperty) {
 		PgGraph pg = new PgGraph();
 		pg.setName("test_graph");
 		try {
 			while (rs.next()) {
 
-				int length_n = list_vp.size() + 2; // Properties + ID + Label
-				int length_e = 3; // ID + Src Node ID + Dst Node ID
-				int length_nl = 2; // ID + Label
+				int lengthNode = listVertexProperty.size() + 2; // Properties + ID + Label
+				int lengthEdge = 3; // ID + Src Node ID + Dst Node ID
+				int lengthNodeList = 2; // ID + Label
 
-				int offset_e = cnt_n * length_n; // Edge Offset
-				int offset_nl = offset_e + (cnt_e * length_e); // Node List Offset
+				int offsetEdge = countNode * lengthNode; // Edge Offset
+				int offsetNodeList = offsetEdge + (countEdge * lengthEdge); // Node List Offset
 
 				// Nodes
-				for (int i = 1; i <= offset_e; i = i + length_n) {
+				for (int i = 1; i <= offsetEdge; i = i + lengthNode) {
 					Object id = rs.getObject(i);
 					String label = rs.getString(i + 1);
 					addNodeById(pg, id, label);
 					PgNode node = pg.getNode(id);
-					for (int j = 0; j < list_vp.size(); j++) {
-						String name = list_vp.get(j).getName();
-						String type = list_vp.get(j).getType().name();
+					for (int j = 0; j < listVertexProperty.size(); j++) {
+						String name = listVertexProperty.get(j).getName();
+						String type = listVertexProperty.get(j).getType().name();
 						if (type == "STRING") {
 							if (rs.getString(i + 2 + j) != null) {
 								node.addProperty(name, rs.getString(i + 2 + j));
@@ -254,25 +254,28 @@ public class Test {
 					}
 				}
 				// Edges
-				for (int i = offset_e + 1; i <= offset_nl; i = i + length_e) {
+				for (int i = offsetEdge + 1; i <= offsetNodeList; i = i + lengthEdge) {
 					addEdgeByIds(pg, rs.getObject(i), rs.getObject(i + 1), rs.getObject(i + 2), "transfer");
 				}
 				// Node List + Edge List
-				for (int i = offset_nl + 1; i <= offset_nl + cnt_nl; i++) {
+				for (int i = offsetNodeList + 1; i <= offsetNodeList + countNodeList; i++) {
 					if (rs.getList(i) != null) {
-						Object node_src = node_ids;
-						Object node_dst;
-						String node_dst_label;
+						Object nodeSrcID = strNodeID;
+						Object nodeDstID;
+						String nodeDstLabel;
 						Object edge;
-						String edge_label;
+						String edgeLabel;
 						for (int j = 0; j < rs.getList(i).size(); j++) {
-							node_dst = rs.getList(i).get(j);
-							node_dst_label = (String) rs.getList(i + 1).get(j);
-							edge = rs.getList(i + cnt_nl * length_nl).get(j);
-							edge_label = (String) rs.getList(i + cnt_nl * length_nl + 1).get(j);
-							addNodeById(pg, node_dst, node_dst_label);
-							addEdgeByIds(pg, edge, node_src, node_dst, edge_label);
-							node_src = node_dst;
+
+							nodeDstID = rs.getList(i).get(j);
+							nodeDstLabel = (String) rs.getList(i + 1).get(j);
+							addNodeById(pg, nodeDstID, nodeDstLabel);
+
+							edge = rs.getList(i + countNodeList * lengthNodeList).get(j);
+							edgeLabel = (String) rs.getList(i + countNodeList * lengthNodeList + 1).get(j);
+							addEdgeByIds(pg, edge, nodeSrcID, nodeDstID, edgeLabel);
+
+							nodeSrcID = nodeDstID;
 						}
 					}
 				}
@@ -295,11 +298,11 @@ public class Test {
 	}
 
 	private static String strList(String elements) {
-		List<String> element_list = new ArrayList<String>();
+		List<String> listElement = new ArrayList<String>();
 		for (String element : elements.split(",")) {
-			element_list.add("'" + element + "'");
+			listElement.add("'" + element + "'");
 		}
-		return String.join(",", element_list);
+		return String.join(",", listElement);
 	}
 
 	private static String printException(Exception e) {
@@ -317,8 +320,8 @@ public class Test {
 		pg.addNode(id, node);
 	}
 
-	private static void addEdgeByIds(PgGraph pg, Object id, Object id_s, Object id_d, String label) {
-		PgEdge edge = new PgEdge(id_s, id_d, false);
+	private static void addEdgeByIds(PgGraph pg, Object id, Object idSrc, Object idDst, String label) {
+		PgEdge edge = new PgEdge(idSrc, idDst, false);
 		edge.addLabel(label);
 		pg.addEdge(id, edge);
 	}
