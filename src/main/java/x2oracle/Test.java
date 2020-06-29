@@ -197,7 +197,7 @@ public class Test {
 			String query = "";
 			query = query.concat("SELECT " + strNode("src", list) + "\n");
 			query = query.concat("     , " + strNode("dst", list) + "\n");
-			query = query.concat("     , ARRAY_AGG(ID(m)), ARRAY_AGG(LABEL(m))" + "\n");
+			query = query.concat("     , ARRAY_AGG(ID(m)), ARRAY_AGG(LABEL(m)), ARRAY_AGG(m.pagerank), ARRAY_AGG(m.description)" + "\n");
 			query = query.concat("     , ARRAY_AGG(ID(e)), ARRAY_AGG(LABEL(e))" + "\n");
 			query = query.concat(" MATCH TOP 10 SHORTEST ((src) (-[e]->(m))* (dst))" + "\n");
 			query = query.concat(" WHERE ID(src) = '" + strNodeSrcID + "'" + "\n");
@@ -227,7 +227,7 @@ public class Test {
 
 				int lengthNode = listVertexProperty.size() + 2; // Properties + ID + Label
 				int lengthEdge = 3; // ID + Src Node ID + Dst Node ID
-				int lengthNodeList = 2; // ID + Label
+				int lengthNodeList = 4; // ID + Label + pagerank
 
 				int offsetEdge = countNode * lengthNode; // Edge Offset
 				int offsetNodeList = offsetEdge + (countEdge * lengthEdge); // Node List Offset
@@ -269,7 +269,23 @@ public class Test {
 
 							nodeDstID = rs.getList(i).get(j);
 							nodeDstLabel = (String) rs.getList(i + 1).get(j);
+							Double nodeDstPagerank = (Double) rs.getList(i + 2).get(j);
+							
 							addNodeById(pg, nodeDstID, nodeDstLabel);
+							PgNode node = pg.getNode(nodeDstID);
+							node.addProperty("pagerank", nodeDstPagerank);
+
+							/*
+							System.out.println(rs.getList(i + 2).size());
+							System.out.println(rs.getList(i + 3).size());
+							*/
+
+							/*
+							if (rs.getList(i + 3).get(j) != null) {
+								String nodeDstDescription = (String) rs.getList(i + 3).get(j);
+								node.addProperty("description", nodeDstDescription);							
+							}
+							*/
 
 							edge = rs.getList(i + countNodeList * lengthNodeList).get(j);
 							edgeLabel = (String) rs.getList(i + countNodeList * lengthNodeList + 1).get(j);
