@@ -28,7 +28,7 @@ public class Test {
 		app.get("/cycle/", ctx -> ctx.result(runCycle(session, ctx.queryParam("node_ids"))));
 		app.get("/path/shortest/", ctx -> ctx
 				.result(runPathShortest(session, ctx.queryParam("src_node_ids"), ctx.queryParam("dst_node_ids"))));
-		app.get("/compute/random_walk", ctx -> ctx.result(runComputeRandomWalk(session, ctx.queryParam("node_ids"))));
+		app.get("/compute/personalized_pagerank", ctx -> ctx.result(runComputePersonalizedPagerank(session, ctx.queryParam("node_ids"))));
 	}
 
 	private static String runTraversal(PgxSession session, String strNodeID) {
@@ -93,7 +93,7 @@ public class Test {
 		return result;
 	}
 
-	private static String runComputeRandomWalk(PgxSession session, String strNodeID) {
+	private static String runComputePersonalizedPagerank(PgxSession session, String strNodeID) {
 		long timeStart = System.nanoTime();
 		String result = "";
 		try {
