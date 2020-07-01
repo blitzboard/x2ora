@@ -21,14 +21,17 @@ public class Test {
 
 		app.get("/node_match/", ctx -> ctx.result(
 				runNodeMatch(session, ctx.queryParam("labels"), ctx.queryParam("order_by"), ctx.queryParam("limit"))));
-		app.get("/custom/recommendation/",
-				ctx -> ctx.result(runCustomRecommendation(session, ctx.queryParam("node_ids"), ctx.queryParam("labels"),
-						ctx.queryParam("order_by"), ctx.queryParam("limit"))));
 		app.get("/traversal/", ctx -> ctx.result(runTraversal(session, ctx.queryParam("node_ids"))));
 		app.get("/cycle/", ctx -> ctx.result(runCycle(session, ctx.queryParam("node_ids"))));
 		app.get("/path/shortest/", ctx -> ctx
 				.result(runPathShortest(session, ctx.queryParam("src_node_ids"), ctx.queryParam("dst_node_ids"))));
-		app.get("/compute/personalized_pagerank", ctx -> ctx.result(runComputePersonalizedPagerank(session, ctx.queryParam("node_ids"))));
+		app.get("/compute/personalized_pagerank",
+				ctx -> ctx.result(runComputePersonalizedPagerank(session, ctx.queryParam("node_ids"))));
+		app.get("/custom/recommendation/",
+				ctx -> ctx.result(runCustomRecommendation(session, ctx.queryParam("node_ids"), ctx.queryParam("labels"),
+						ctx.queryParam("order_by"), ctx.queryParam("limit"))));
+		app.get("/custom/path/3_hops/", ctx -> ctx
+				.result(runCustomPath3Hops(session, ctx.queryParam("src_node_ids"), ctx.queryParam("dst_node_ids"), ctx.queryParam("min_pagerank"))));
 	}
 
 	private static String runTraversal(PgxSession session, String strNodeID) {
@@ -42,11 +45,10 @@ public class Test {
 
 			String query = "";
 			query = "SELECT DISTINCT" + " ID(n0), LABEL(n0)," + " ID(n1), LABEL(n1)," + " ID(n2), LABEL(n2),"
-					+ " ID(n3), LABEL(n3)," + " ID(n4), LABEL(n4)," + " ID(n5), LABEL(n5),"
-					+ " ID(n6), LABEL(n6)," + " ID(e1), ID(n0) AS e1s, ID(n1) AS e1d,"
-					+ " ID(e2), ID(n1) AS e2s, ID(n2) AS e2d," + " ID(e3), ID(n2) AS e3s, ID(n3) AS e3d,"
-					+ " ID(e4), ID(n3) AS e4s, ID(n4) AS e4d," + " ID(e5), ID(n4) AS e5s, ID(n5) AS e5d,"
-					+ " ID(e6), ID(n5) AS e6s, ID(n6) AS e6d"
+					+ " ID(n3), LABEL(n3)," + " ID(n4), LABEL(n4)," + " ID(n5), LABEL(n5)," + " ID(n6), LABEL(n6),"
+					+ " ID(e1), ID(n0) AS e1s, ID(n1) AS e1d," + " ID(e2), ID(n1) AS e2s, ID(n2) AS e2d,"
+					+ " ID(e3), ID(n2) AS e3s, ID(n3) AS e3d," + " ID(e4), ID(n3) AS e4s, ID(n4) AS e4d,"
+					+ " ID(e5), ID(n4) AS e5s, ID(n5) AS e5d," + " ID(e6), ID(n5) AS e6s, ID(n6) AS e6d"
 					+ " MATCH (n0)-[e1]->(n1)-[e2]->(n2)-[e3]->(n3)-[e4]->(n4)-[e5]->(n5)-[e6]->(n6)"
 					+ " WHERE ID(n0) = " + strNodeID;
 			PgqlResultSet rs = graph.queryPgql(query);
@@ -151,8 +153,8 @@ public class Test {
 		return result;
 	}
 
-	private static String runCustomRecommendation(PgxSession session, String strNodeID, String strLabel, String strOrderBy,
-			String strLimit) {
+	private static String runCustomRecommendation(PgxSession session, String strNodeID, String strLabel,
+			String strOrderBy, String strLimit) {
 		long timeStart = System.nanoTime();
 		String result = "";
 		try {
@@ -197,7 +199,9 @@ public class Test {
 			String query = "";
 			query = query.concat("SELECT " + strNode("src", list) + "\n");
 			query = query.concat("     , " + strNode("dst", list) + "\n");
-			query = query.concat("     , ARRAY_AGG(ID(m)), ARRAY_AGG(LABEL(m)), ARRAY_AGG(m.pagerank), ARRAY_AGG(m.description)" + "\n");
+			query = query.concat(
+					"     , ARRAY_AGG(ID(m)), ARRAY_AGG(LABEL(m)), ARRAY_AGG(m.pagerank), ARRAY_AGG(m.description)"
+							+ "\n");
 			query = query.concat("     , ARRAY_AGG(ID(e)), ARRAY_AGG(LABEL(e))" + "\n");
 			query = query.concat(" MATCH TOP 10 SHORTEST ((src) (-[e]->(m))* (dst))" + "\n");
 			query = query.concat(" WHERE ID(src) = '" + strNodeSrcID + "'" + "\n");
@@ -218,8 +222,48 @@ public class Test {
 		return result;
 	}
 
-	private static String getResultPG(PgqlResultSet rs, int countNode, int countEdge, int countNodeList, int countEdgeList, String strNodeID,
-			List<VertexProperty<?, ?>> listVertexProperty) {
+	private static String runCustomPath3Hops(PgxSession session, String strNodeSrcID, String strNodeDstIDs,
+			String strMinPagerank) {
+		long timeStart = System.nanoTime();
+		String result = "";
+		try {
+			PgxGraph graph = session.getGraph("Online Retail");
+
+			Set<VertexProperty<?, ?>> vertexProperties = graph.getVertexProperties();
+			List<VertexProperty<?, ?>> list = new ArrayList<VertexProperty<?, ?>>(vertexProperties);
+
+			String query = "";
+			query = query.concat("SELECT " + strNode("src", list) + "\n");
+			query = query.concat("     , " + strNode("dst", list) + "\n");
+			query = query.concat("     , " + strNode("p", list) + "\n");
+			query = query.concat("     , " + strNode("c", list) + "\n");
+			query = query.concat("     , ID(e1), ID(src) AS e1s, ID(p) AS e1d" + "\n");
+			query = query.concat("     , ID(e2), ID(c) AS e2s, ID(p) AS e2d" + "\n");
+			query = query.concat("     , ID(e3), ID(c) AS e3s, ID(dst) AS e3d" + "\n");
+			query = query.concat(" MATCH (src)-[e1]->(p)<-[e2]-(c)-[e3]->(dst)" + "\n");
+			query = query.concat(" WHERE ID(src) = '" + strNodeSrcID + "'" + "\n");
+			query = query.concat("   AND ID(dst) IN (" + strList(strNodeDstIDs) + ")" + "\n");
+			query = query.concat("   AND ID(src) != ID(c)" + "\n");
+			query = query.concat("   AND ID(dst) != ID(p)" + "\n");
+			query = query.concat("   AND c.pagerank >= " + strMinPagerank);
+			System.out.println("INFO: Query: \n\n" + query + "\n");
+
+			PgqlResultSet rs = graph.queryPgql(query);
+			result = getResultPG(rs, 4, 3, 0, 0, strNodeSrcID, list);
+
+		} catch (ExecutionException e) {
+			result = printException(e);
+		} catch (InterruptedException e) {
+			result = printException(e);
+		} finally {
+		}
+		long timeEnd = System.nanoTime();
+		System.out.println("INFO: Execution Time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms");
+		return result;
+	}
+
+	private static String getResultPG(PgqlResultSet rs, int countNode, int countEdge, int countNodeList,
+			int countEdgeList, String strNodeID, List<VertexProperty<?, ?>> listVertexProperty) {
 		PgGraph pg = new PgGraph();
 		pg.setName("test_graph");
 		try {
@@ -227,7 +271,7 @@ public class Test {
 
 				int lengthNode = listVertexProperty.size() + 2; // Properties + ID + Label
 				int lengthEdge = 3; // ID + Src Node ID + Dst Node ID
-				int lengthNodeList = 4; // ID + Label + pagerank
+				int lengthNodeList = 4; // ID + Label + pagerank + description
 
 				int offsetEdge = countNode * lengthNode; // Edge Offset
 				int offsetNodeList = offsetEdge + (countEdge * lengthEdge); // Node List Offset
@@ -270,22 +314,21 @@ public class Test {
 							nodeDstID = rs.getList(i).get(j);
 							nodeDstLabel = (String) rs.getList(i + 1).get(j);
 							Double nodeDstPagerank = (Double) rs.getList(i + 2).get(j);
-							
+
 							addNodeById(pg, nodeDstID, nodeDstLabel);
 							PgNode node = pg.getNode(nodeDstID);
 							node.addProperty("pagerank", nodeDstPagerank);
 
 							/*
-							System.out.println(rs.getList(i + 2).size());
-							System.out.println(rs.getList(i + 3).size());
-							*/
+							 * System.out.println(rs.getList(i + 2).size()); System.out.println(rs.getList(i
+							 * + 3).size());
+							 */
 
 							/*
-							if (rs.getList(i + 3).get(j) != null) {
-								String nodeDstDescription = (String) rs.getList(i + 3).get(j);
-								node.addProperty("description", nodeDstDescription);							
-							}
-							*/
+							 * if (rs.getList(i + 3).get(j) != null) { String nodeDstDescription = (String)
+							 * rs.getList(i + 3).get(j); node.addProperty("description",
+							 * nodeDstDescription); }
+							 */
 
 							edge = rs.getList(i + countNodeList * lengthNodeList).get(j);
 							edgeLabel = (String) rs.getList(i + countNodeList * lengthNodeList + 1).get(j);
