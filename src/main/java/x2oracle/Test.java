@@ -9,18 +9,33 @@ import java.util.concurrent.ExecutionException;
 import io.javalin.Javalin;
 import oracle.pgql.lang.PgqlException;
 import oracle.pgx.api.*;
+import oracle.pg.rdbms.GraphServer;
 
 public class Test {
 	public static void main(String[] szArgs) throws Exception {
 		Javalin app = Javalin.create(config -> {
 			config.enableCorsForAllOrigins();
 		}).start(7000);
+		
+		String baseUrl = "http://localhost:7007";
+		String username = "graph_dev";
+		String passwordStr = "Welcome1";
+		char[] password = passwordStr.toCharArray();
+		ServerInstance instance = GraphServer.getInstance(baseUrl, username, password);
+		System.out.println("PGX Version: " + instance.getVersion());
+		PgxSession session = instance.createSession("x2oracle");
 
-		ServerInstance instance = Pgx.getInstance("http://localhost:7007");
-		PgxSession session = instance.createSession("my-session");
+		/*
+		String keystorePath = "keystore.p12";
+		String keystorePasswordStr = "oracle";
+		char[] keystorePassword = keystorePasswordStr.toCharArray();
+		try (PgxSession session = instance.createSession("my-session")) {
+		  session.registerKeystore(keystorePath, keystorePassword);
+		}
+		*/
 
 		app.get("/node_match/", ctx -> ctx.result(
-				runNodeMatch(session, ctx.queryParam("labels"), ctx.queryParam("order_by"), ctx.queryParam("limit"))));
+			runNodeMatch(session, ctx.queryParam("labels"), ctx.queryParam("order_by"), ctx.queryParam("limit"))));
 		app.get("/traversal/", ctx -> ctx.result(runTraversal(session, ctx.queryParam("node_ids"))));
 		app.get("/cycle/", ctx -> ctx.result(runCycle(session, ctx.queryParam("node_ids"))));
 		app.get("/path/shortest/", ctx -> ctx
@@ -265,13 +280,13 @@ public class Test {
 	private static String getResultPG(PgqlResultSet rs, int countNode, int countEdge, int countNodeList,
 			int countEdgeList, String strNodeID, List<VertexProperty<?, ?>> listVertexProperty) {
 		PgGraph pg = new PgGraph();
-		pg.setName("test_graph");
+		pg.setName("x2oracle_response");
 		try {
 			while (rs.next()) {
 
 				int lengthNode = listVertexProperty.size() + 2; // Properties + ID + Label
 				int lengthEdge = 3; // ID + Src Node ID + Dst Node ID
-				int lengthNodeList = 4; // ID + Label + pagerank + description
+				int lengthNodeList = 2; // ID + Label (removed: + pagerank + description)
 
 				int offsetEdge = countNode * lengthNode; // Edge Offset
 				int offsetNodeList = offsetEdge + (countEdge * lengthEdge); // Node List Offset
@@ -313,23 +328,12 @@ public class Test {
 
 							nodeDstID = rs.getList(i).get(j);
 							nodeDstLabel = (String) rs.getList(i + 1).get(j);
-							Double nodeDstPagerank = (Double) rs.getList(i + 2).get(j);
+							//Double nodeDstPagerank = (Double) rs.getList(i + 2).get(j);
 
 							addNodeById(pg, nodeDstID, nodeDstLabel);
 							PgNode node = pg.getNode(nodeDstID);
-							node.addProperty("pagerank", nodeDstPagerank);
-
-							/*
-							 * System.out.println(rs.getList(i + 2).size()); System.out.println(rs.getList(i
-							 * + 3).size());
-							 */
-
-							/*
-							 * if (rs.getList(i + 3).get(j) != null) { String nodeDstDescription = (String)
-							 * rs.getList(i + 3).get(j); node.addProperty("description",
-							 * nodeDstDescription); }
-							 */
-
+							//node.addProperty("pagerank", nodeDstPagerank);
+							
 							edge = rs.getList(i + countNodeList * lengthNodeList).get(j);
 							edgeLabel = (String) rs.getList(i + countNodeList * lengthNodeList + 1).get(j);
 							addEdgeByIds(pg, edge, nodeSrcID, nodeDstID, edgeLabel);
