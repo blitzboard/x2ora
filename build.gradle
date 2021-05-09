@@ -13,7 +13,7 @@ plugins {
     id 'application'
 }
 
-mainClassName = 'x2oracle.Test'
+mainClassName = 'x2oracle.Application'
 
 repositories {
     // Use jcenter for resolving dependencies.
@@ -35,5 +35,5 @@ dependencies {
     compile 'io.javalin:javalin:3.7.0'
     
     // Oracle Graph Client
-    compile fileTree(dir: './oracle-graph-client-20.4.0/lib/', include: '*.jar')
+    compile fileTree(dir: './oracle-graph-client-21.2.0/lib/', include: '*.jar', exclude: 'ons-18.3.0.jar')
 }
