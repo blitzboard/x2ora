@@ -1,5 +1,6 @@
 package x2oracle;
 
+import x2oracle.RetrievalController;
 import x2oracle.UpdateController;
 import io.javalin.Javalin;
 import oracle.pg.rdbms.pgql.jdbc.PgqlJdbcRdbmsDriver;
@@ -27,6 +28,7 @@ public class Main {
 			);
 		conn.setAutoCommit(false);
 
+		RetrievalController.test();
 		System.out.println("INFO: Ready to accept requests");
 		app.get("/merge_node/", UpdateController.mergeNode); 
 		app.get("/merge_edge/", UpdateController.mergeEdge);
