@@ -13,6 +13,7 @@ import java.io.StringWriter;
 public class Main {
 
 	public static Connection conn;
+	public static String strGraph;
 
 	public static void main(String[] args) throws Exception {
 		Javalin app = Javalin.create(config -> {
@@ -27,6 +28,7 @@ public class Main {
 			rb.getString("password")
 			);
 		conn.setAutoCommit(false);
+		strGraph = rb.getString("graph");
 
 		RetrievalController.test();
 		System.out.println("INFO: Ready to accept requests");

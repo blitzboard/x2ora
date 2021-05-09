@@ -17,7 +17,7 @@ public class RetrievalController {
       ResultSet rs;
 
       // Check if the node exists
-      ps = conn.prepareStatement("SELECT COUNT(v) FROM MATCH (v) ON graph1");
+      ps = conn.prepareStatement("SELECT COUNT(v) FROM MATCH (v) ON " + strGraph);
       ps.execute();
       rs = ps.getResultSet();
       if (rs.first()){
