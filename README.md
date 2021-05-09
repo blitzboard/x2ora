@@ -11,12 +11,19 @@ Get Oracle Graph Client library.
 Locate and unzip in `x2oracle` directory.
 
     $ cd x2oracle
-    $ unzip oracle-graph-client-20.2.0.zip
+    $ unzip oracle-graph-client-21.2.0.zip
+
+Set database login information.
+
+    $ cd src/main/resource
+    $ mv common.sample.properties common.properties
+    $ vi common.properties
 
 Run Gradle.
 
     $ ./gradlew run
 
-Try a request.
+Try requests.
 
-* [http://localhost:7000/node_match/?node_ids=201](http://localhost:7000/node_match/?node_ids=202)
+* http://localhost:7000/merge_node/?label=PERSON&id=Taro
+* http://localhost:7000/merge_edge/?label=KNOWS&src_id=Taro&dst_id=Jiro
