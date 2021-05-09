@@ -1,7 +1,5 @@
 package x2oracle;
 
-import x2oracle.RetrievalController;
-import x2oracle.UpdateController;
 import io.javalin.Javalin;
 import oracle.pg.rdbms.pgql.jdbc.PgqlJdbcRdbmsDriver;
 import java.sql.DriverManager;

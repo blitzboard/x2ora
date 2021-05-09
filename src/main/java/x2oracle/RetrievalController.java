@@ -32,4 +32,7 @@ public class RetrievalController {
     return result;
   };
 
+  public static Handler nodeMatch = ctx -> {
+  };
+
 }
