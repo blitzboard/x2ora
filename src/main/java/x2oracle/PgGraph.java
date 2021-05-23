@@ -2,18 +2,22 @@ package x2oracle;
 
 import java.util.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 // members are public for jackson to access and export as JSON
 
 class PgGraph {
   public String name;
-  public Map<Object, PgNode> nodes = new HashMap<>();
-  //public List<PgEdge> edges = new ArrayList<PgEdge>();
-  public Map<Object, PgEdge> edges = new HashMap<>();
+  //public Map<Object, PgNode> nodes = new HashMap<>();
+  //public Map<Object, PgEdge> edges = new HashMap<>();
+  public HashSet<PgNode> nodes = new HashSet<PgNode>();
+  public HashSet<PgEdge> edges = new HashSet<PgEdge>();
   public void setName(String name) {
     this.name = name;
   }
+  /*
   public void addNode(Object id, PgNode node) {
     nodes.put(id, node);
   }
@@ -26,6 +30,14 @@ class PgGraph {
   public PgEdge getEdge(Object id) {
     return edges.get(id);
   }
+  */
+  public void addNode(PgNode node) {
+    nodes.add(node);
+  }
+  public void addEdge(PgEdge edge) {
+    edges.add(edge);
+  }
+  /*
   public String exportJSON() {
     ObjectMapper mapper = new ObjectMapper();
     String json = "";
@@ -36,38 +48,81 @@ class PgGraph {
     }
     return json;
   }
+  */
 }
 
 class PgNode {
   public Object id;
-  public Set<String> labels = new HashSet<String>();
-  public Map<String, Object> properties = new HashMap<>();
+  public HashSet<String> labels = new HashSet<String>();
+  public HashMap<String, List<Object>> properties = new HashMap<>();
+  /*
   public PgNode(Object id) {
     this.id = id;
   }
-  public void addLabel(String label) {
-    labels.add(label);
+  */
+  public PgNode(Object id, String label, String props) {
+    this.id = id;
+    this.addLabel(label);
+    this.addProperties(props);
   }
+  public void addLabel(String label) {
+    labels.add(label.toLowerCase());
+  }
+  /*
   public void addProperty(String key, Object value) {
     properties.put(key, value);
+  }
+  */
+  public void addProperties(String json) {
+    ObjectMapper mapper = new ObjectMapper();
+    TypeReference<HashMap<String, List<Object>>> typeRef = new TypeReference<HashMap<String, List<Object>>>(){};
+    try {
+      properties = mapper.readValue(json, typeRef);
+    } catch (JsonMappingException e) {
+      e.printStackTrace();
+    } catch (JsonProcessingException e) {
+      e.printStackTrace();
+    }
   }
 }
 
 class PgEdge {
-  public Object id1;
-  public Object id2;
+  public Object from;
+  public Object to;
   public boolean undirected = false;
-  public Set<String> labels = new HashSet<String>();
-  public Map<String, String> properties = new HashMap<>();
-  public PgEdge(Object id1, Object id2, boolean undirected) {
-    this.id1 = id1;
-    this.id2 = id2;
+  public HashSet<String> labels = new HashSet<String>();
+  public HashMap<String, List<Object>> properties = new HashMap<>();
+  /*
+  public PgEdge(Object from, Object to, boolean undirected) {
+    this.from = from;
+    this.to = to;
     this.undirected = undirected;
   }
-  public void addLabel(String label) {
-    labels.add(label);
+  */
+  public PgEdge(Object from, Object to, boolean undirected, String label, String props) {
+    this.from = from;
+    this.to = to;
+    this.undirected = undirected;
+    this.addLabel(label);
+    this.addProperties(props);
   }
+  public void addLabel(String label) {
+    labels.add(label.toLowerCase());
+  }
+  /*
   public void addProperty(String key, String value) {
     properties.put(key, value);
+  }
+  */
+  public void addProperties(String json) {
+    ObjectMapper mapper = new ObjectMapper();
+    TypeReference<HashMap<String, List<Object>>> typeRef = new TypeReference<HashMap<String, List<Object>>>(){};
+    try {
+      properties = mapper.readValue(json, typeRef);
+    } catch (JsonMappingException e) {
+      e.printStackTrace();
+    } catch (JsonProcessingException e) {
+      e.printStackTrace();
+    }
   }
 }
