@@ -28,10 +28,14 @@ public class Main {
 		conn.setAutoCommit(false);
 		strGraph = rb.getString("graph");
 
-		RetrievalController.test();
+		// Run a test query at startup
+		RetrievalController.countNodes();
+
 		System.out.println("INFO: Ready to accept requests");
 		app.get("/merge_node/", UpdateController.mergeNode); 
 		app.get("/merge_edge/", UpdateController.mergeEdge);
+		app.get("/node_match/", RetrievalController.nodeMatch);
+		app.get("/edge_match/", RetrievalController.edgeMatch);
 	}
 
 	public static String printException(Exception e) {

@@ -23,7 +23,13 @@ Run Gradle.
 
     $ ./gradlew run
 
-Try requests.
+Update requests.
 
-* http://localhost:7000/merge_node/?label=PERSON&id=Taro
-* http://localhost:7000/merge_edge/?label=KNOWS&src_id=Taro&dst_id=Jiro
+http://localhost:7000/merge_node/?label=person&id=Taro&props={"age":[37]}
+http://localhost:7000/merge_node/?label=person&id=Jiro&props={"age":[36]}
+http://localhost:7000/merge_edge/?label=knows&src_id=Taro&dst_id=Jiro&props={"since":[2017]}
+
+Retrieval requests.
+
+curl http://localhost:7000/node_match/?id=Taro
+curl http://localhost:7000/edge_match/?labels=knows

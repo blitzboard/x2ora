@@ -12,6 +12,7 @@ public class UpdateController {
 
     String strLabel = ctx.queryParam("label");
     String strId = ctx.queryParam("id");
+    String strProps = ctx.queryParam("props");
 
     long timeStart = System.nanoTime();
     String result = "";
@@ -23,7 +24,7 @@ public class UpdateController {
       // Check if the node exists
       if (able) {
         ps = conn.prepareStatement("SELECT ID(v) FROM MATCH (v) ON " + strGraph + " WHERE LABEL(v) = ? AND v.id = ?");
-        ps.setString(1, strLabel);
+        ps.setString(1, strLabel.toUpperCase());
         ps.setString(2, strId);
         ps.execute();
         rs = ps.getResultSet();
@@ -35,9 +36,10 @@ public class UpdateController {
 
       // Insert the node if not exists
       if (able) {
-        String query = "INSERT INTO " + strGraph + " VERTEX v LABELS (" + strLabel + ") PROPERTIES (v.id = ?)";			
+        String query = "INSERT INTO " + strGraph + " VERTEX v LABELS (" + strLabel + ") PROPERTIES (v.id = ?, v.json = ?)";			
         ps = conn.prepareStatement(query);
         ps.setString(1, strId);
+        ps.setString(2, strProps);
         ps.execute();
         conn.commit();
         result = "Node " + strLabel + " " + strId + " is added.";
@@ -56,6 +58,7 @@ public class UpdateController {
     String strLabel = ctx.queryParam("label");
     String strSrcId = ctx.queryParam("src_id");
     String strDstId = ctx.queryParam("dst_id");
+    String strProps = ctx.queryParam("props");
 
     long timeStart = System.nanoTime();
     String result = "";
@@ -92,7 +95,7 @@ public class UpdateController {
       // Check if the edge exists
       if (able) {
         ps = conn.prepareStatement("SELECT ID(e) FROM MATCH (src)-[e]->(dst) ON " + strGraph + " WHERE LABEL(e) = ? AND src.id = ? AND dst.id = ?");
-        ps.setString(1, strLabel);
+        ps.setString(1, strLabel.toUpperCase());
         ps.setString(2, strSrcId);
         ps.setString(3, strDstId);
         ps.execute();
@@ -105,11 +108,12 @@ public class UpdateController {
 
       // Insert the edge if not exists
       if (able) {
-        String query = "INSERT INTO " + strGraph + " EDGE e BETWEEN src AND dst LABELS (" + strLabel + ") "
+        String query = "INSERT INTO " + strGraph + " EDGE e BETWEEN src AND dst LABELS (" + strLabel + ") PROPERTIES (e.json = ?)"
                      + "FROM MATCH (src) ON " + strGraph + ", MATCH (dst) ON " + strGraph + " WHERE src.id = ? AND dst.id = ?";			
         ps = conn.prepareStatement(query);
-        ps.setString(1, strSrcId);
-        ps.setString(2, strDstId);
+        ps.setString(1, strProps);
+        ps.setString(2, strSrcId);
+        ps.setString(3, strDstId);
         ps.execute();
         conn.commit();
         result = "Edge " + strLabel + " " + strSrcId + " -> " + strDstId + " is added.";
