@@ -34,7 +34,15 @@ public class RetrievalController {
 
   public static Handler nodeMatch = ctx -> {
 
-    String strId = ctx.queryParam("id");
+    String strIds = ctx.queryParam("node_ids[]");
+    
+    String strWhere = " WHERE 1 = 1";
+    if (!strIds.isEmpty()) {
+      strWhere = strWhere + " AND v.id = (?)";
+    }
+    String strQuery = "SELECT v.id, LABEL(v), v.json FROM MATCH (v) ON " + strGraph + strWhere;
+
+    System.out.println("INFO: A request is received: " + strQuery);
 
     long timeStart = System.nanoTime();
     String result = "";
@@ -43,17 +51,17 @@ public class RetrievalController {
       PreparedStatement ps;
       ResultSet rs;
 
-      ps = conn.prepareStatement("SELECT v.id, LABEL(v), v.json FROM MATCH (v) ON " + strGraph + " WHERE v.id = ?");
-      ps.setString(1, strId);
+      ps = conn.prepareStatement(strQuery);
+      ps.setString(1, strIds);
       ps.execute();
       rs = ps.getResultSet();
-      result = "Node(s) with ID = " + strId + " are retrieved.";
+      result = "Nodes with ID [" + strIds + "] are retrieved.";
       pg = getResultPG(rs, 1, 0);
     } catch (SQLException e) {
       result = printException(e);
     }
     long timeEnd = System.nanoTime();
-    System.out.println("INFO: Execution Time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms (" + result + ")");
+    System.out.println("INFO: Execution time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms (" + result + ")");
     ctx.result(result);
     ctx.contentType("application/json");
     ctx.json(pg);
@@ -61,7 +69,14 @@ public class RetrievalController {
 
   public static Handler edgeMatch = ctx -> {
 
-    String strLabels = ctx.queryParam("labels").toLowerCase();
+    String strLabels = ctx.queryParam("edge_labels[]").toUpperCase();
+
+    String strWhere = " WHERE 1 = 1";
+    if (!strLabels.isEmpty()) {
+      strWhere = strWhere + " AND LABEL(e) = ?";
+    }
+    String strQuery = "SELECT v1.id AS v1_id, LABEL(v1) AS v1_label, v1.json AS v1_json, v2.id AS v2_id, LABEL(v2) AS v2_label, v2.json AS v2_json, ID(e), v1.id AS src, v2.id AS dst, LABEL(e), e.json FROM MATCH (v1)-[e]->(v2) ON " + strGraph + strWhere;
+    System.out.println("INFO: A request is received: " + strQuery);
 
     long timeStart = System.nanoTime();
     String result = "";
@@ -70,7 +85,8 @@ public class RetrievalController {
       PreparedStatement ps;
       ResultSet rs;
 
-      ps = conn.prepareStatement("SELECT v1.id AS v1_id, LABEL(v1) AS v1_label, v1.json AS v1_json, v2.id AS v2_id, LABEL(v2) AS v2_label, v2.json AS v2_json, ID(e), v1.id AS src, v2.id AS dst, LABEL(e), e.json FROM MATCH (v1)-[e:" + strLabels + "]->(v2) ON " + strGraph);
+      ps = conn.prepareStatement(strQuery);
+      ps.setString(1, strLabels);
       ps.execute();
       rs = ps.getResultSet();
       result = "Edge(s) with Label = " + strLabels + " are retrieved.";
