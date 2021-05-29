@@ -32,12 +32,12 @@ FYI, how to modify the firewall setting to open the port 7000.
 
 Update requests.
 
-    curl http://localhost:7000/merge_node/?label=person&id=Taro&props={"age":[37]}
-    curl http://localhost:7000/merge_node/?label=person&id=Jiro&props={"age":[36]}
-    curl http://localhost:7000/merge_edge/?label=knows&src_id=Taro&dst_id=Jiro&props={"since":[2017]}
+    curl "http://localhost:7000/merge_node/?label=person&id=Taro&props={"age":[37]}"
+    curl "http://localhost:7000/merge_node/?label=person&id=Jiro&props={"age":[36]}"
+    curl "http://localhost:7000/merge_edge/?label=knows&src_id=Taro&dst_id=Jiro&props={"since":[2017]}"
 
 Retrieval requests.
 
-    curl http://localhost:7000/node_match/?node_ids[]=Taro
-    curl http://localhost:7000/edge_match/?edge_labels[]=knows
+    curl "http://localhost:7000/node_match/?node_ids[]=Taro&limit=100"
+    curl "http://localhost:7000/edge_match/?edge_labels[]=knows&limit=100"
 
