@@ -38,6 +38,6 @@ Update requests.
 
 Retrieval requests.
 
-    curl http://localhost:7000/node_match/?id=Taro
-    curl http://localhost:7000/edge_match/?labels=knows
+    curl http://localhost:7000/node_match/?node_ids=Taro
+    curl http://localhost:7000/edge_match/?edge_labels[]=knows
 
