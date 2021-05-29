@@ -8,15 +8,22 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 // members are public for jackson to access and export as JSON
 
+class PgResponse {
+  public String request;
+  public PgGraph pg;
+  public void setRequest(String request) {
+    this.request = request;
+  }
+  public void setPg(PgGraph pg) {
+    this.pg = pg;
+  }
+}
+
 class PgGraph {
-  public String name;
   //public Map<Object, PgNode> nodes = new HashMap<>();
   //public Map<Object, PgEdge> edges = new HashMap<>();
   public HashSet<PgNode> nodes = new HashSet<PgNode>();
   public HashSet<PgEdge> edges = new HashSet<PgEdge>();
-  public void setName(String name) {
-    this.name = name;
-  }
   /*
   public void addNode(Object id, PgNode node) {
     nodes.put(id, node);

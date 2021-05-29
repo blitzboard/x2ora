@@ -64,7 +64,10 @@ public class RetrievalController {
     System.out.println("INFO: Execution time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms (" + result + ")");
     ctx.result(result);
     ctx.contentType("application/json");
-    ctx.json(pg);
+    PgResponse response = new PgResponse();
+    response.setRequest(ctx.fullUrl());
+    response.setPg(pg);
+    ctx.json(response);
   };
 
   public static Handler edgeMatch = ctx -> {
@@ -98,12 +101,14 @@ public class RetrievalController {
     System.out.println("INFO: Execution Time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms (" + result + ")");
     ctx.result(result);
     ctx.contentType("application/json");
-    ctx.json(pg);
+    PgResponse response = new PgResponse();
+    response.setRequest(ctx.fullUrl());
+    response.setPg(pg);
+    ctx.json(response);
   };
 
 	private static PgGraph getResultPG(ResultSet rs, int countNode, int countEdge) {
 		PgGraph pg = new PgGraph();
-		pg.setName("x2_response");
 		try {
 			while (rs.next()) {
 
