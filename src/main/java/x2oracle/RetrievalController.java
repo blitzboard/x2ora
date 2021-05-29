@@ -34,16 +34,15 @@ public class RetrievalController {
 
   public static Handler nodeMatch = ctx -> {
 
-    String strIds = ctx.queryParam("node_ids[]");
-    Integer intLimit = 1000;
-    intLimit = ctx.queryParam("limit", Integer.class).get();
+    String strIds = ctx.queryParam("node_ids[]", "");
+    String strLimit = ctx.queryParam("limit", "1000");
     
     String strWhere = " WHERE 1 = 1";
     if (!strIds.isEmpty()) {
       strWhere = strWhere + " AND v.id = (?)";
     }
-    String strLimit = " LIMIT " + intLimit;
-    String strQuery = "SELECT v.id, LABEL(v), v.json FROM MATCH (v) ON " + strGraph + strWhere + strLimit;    
+    String clauseLimit = " LIMIT " + strLimit;
+    String strQuery = "SELECT v.id, LABEL(v), v.json FROM MATCH (v) ON " + strGraph + strWhere + clauseLimit;    
     System.out.println("INFO: A request is received: " + strQuery);
 
     long timeStart = System.nanoTime();
@@ -74,16 +73,15 @@ public class RetrievalController {
 
   public static Handler edgeMatch = ctx -> {
 
-    String strLabels = ctx.queryParam("edge_labels[]").toUpperCase();
-    Integer intLimit = 1000;
-    intLimit = ctx.queryParam("limit", Integer.class).get();
+    String strLabels = ctx.queryParam("edge_labels[]", "").toUpperCase();
+    String strLimit = ctx.queryParam("limit", "1000");
 
     String strWhere = " WHERE 1 = 1";
     if (!strLabels.isEmpty()) {
       strWhere = strWhere + " AND LABEL(e) = ?";
     }
-    String strLimit = " LIMIT " + intLimit;
-    String strQuery = "SELECT v1.id AS v1_id, LABEL(v1) AS v1_label, v1.json AS v1_json, v2.id AS v2_id, LABEL(v2) AS v2_label, v2.json AS v2_json, ID(e), v1.id AS src, v2.id AS dst, LABEL(e), e.json FROM MATCH (v1)-[e]->(v2) ON " + strGraph + strWhere + strLimit;
+    String clauseLimit = " LIMIT " + strLimit;
+    String strQuery = "SELECT v1.id AS v1_id, LABEL(v1) AS v1_label, v1.json AS v1_json, v2.id AS v2_id, LABEL(v2) AS v2_label, v2.json AS v2_json, ID(e), v1.id AS src, v2.id AS dst, LABEL(e), e.json FROM MATCH (v1)-[e]->(v2) ON " + strGraph + strWhere + clauseLimit;
     System.out.println("INFO: A request is received: " + strQuery);
 
     long timeStart = System.nanoTime();
