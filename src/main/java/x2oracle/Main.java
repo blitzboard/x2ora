@@ -22,10 +22,10 @@ public class Main {
 			config.enableCorsForAllOrigins();
 			config.server(() -> {
 				Server server = new Server();
-				ServerConnector sslConnector = new ServerConnector(server, getSslContextFactory());
-				sslConnector.setPort(7001);
 				ServerConnector connector = new ServerConnector(server);
+				ServerConnector sslConnector = new ServerConnector(server, getSslContextFactory());
 				connector.setPort(7000);
+				sslConnector.setPort(7001);
 				server.setConnectors(new Connector[]{sslConnector, connector});
 				return server;
 			});
@@ -53,7 +53,6 @@ public class Main {
 	
 	private static SslContextFactory getSslContextFactory() {
 		SslContextFactory sslContextFactory = new SslContextFactory();
-		System.out.println(System.getProperty("user.dir"));
 		sslContextFactory.setKeyStorePath(System.getProperty("user.dir") + "/src/main/resources/keystore.jks");
 		sslContextFactory.setKeyStorePassword("welcome1");
 		return sslContextFactory;
