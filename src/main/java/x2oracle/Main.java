@@ -7,6 +7,10 @@ import java.sql.Connection;
 import java.util.ResourceBundle;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import org.eclipse.jetty.server.Connector;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.util.ssl.SslContextFactory;
 
 public class Main {
 
@@ -16,7 +20,16 @@ public class Main {
 	public static void main(String[] args) throws Exception {
 		Javalin app = Javalin.create(config -> {
 			config.enableCorsForAllOrigins();
-		}).start(7000);
+			config.server(() -> {
+				Server server = new Server();
+				ServerConnector sslConnector = new ServerConnector(server, getSslContextFactory());
+				sslConnector.setPort(443);
+				ServerConnector connector = new ServerConnector(server);
+				connector.setPort(80);
+				server.setConnectors(new Connector[]{sslConnector, connector});
+				return server;
+			});
+		}).start();
 		
 		ResourceBundle rb = ResourceBundle.getBundle("common");
 		DriverManager.registerDriver(new PgqlJdbcRdbmsDriver());
@@ -36,6 +49,14 @@ public class Main {
 		app.get("/merge_edge/", UpdateController.mergeEdge);
 		app.get("/node_match/", RetrievalController.nodeMatch);
 		app.get("/edge_match/", RetrievalController.edgeMatch);
+	}
+	
+	private static SslContextFactory getSslContextFactory() {
+		SslContextFactory sslContextFactory = new SslContextFactory();
+		System.out.println(System.getProperty("user.dir"));
+		sslContextFactory.setKeyStorePath(System.getProperty("user.dir") + "/src/main/resources/keystore.jks");
+		sslContextFactory.setKeyStorePassword("welcome1");
+		return sslContextFactory;
 	}
 
 	public static String printException(Exception e) {
