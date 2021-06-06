@@ -10,9 +10,9 @@ public class UpdateController {
 
   public static Handler mergeNode = ctx -> {
 
-    String strLabel = ctx.queryParam("label");
-    String strId = ctx.queryParam("id");
-    String strProps = ctx.queryParam("props");
+    String strLabel = ctx.formParam("label");
+    String strId = ctx.formParam("id");
+    String strProps = ctx.formParam("props");
 
     long timeStart = System.nanoTime();
     String result = "";
@@ -50,15 +50,15 @@ public class UpdateController {
     }
     long timeEnd = System.nanoTime();
     System.out.println("INFO: Execution Time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms (" + result + ")");
-    ctx.result(result);
+    ctx.result(result + "\n");
   };
 
   public static Handler mergeEdge = ctx -> {
 
-    String strLabel = ctx.queryParam("label");
-    String strSrcId = ctx.queryParam("src_id");
-    String strDstId = ctx.queryParam("dst_id");
-    String strProps = ctx.queryParam("props");
+    String strLabel = ctx.formParam("label");
+    String strSrcId = ctx.formParam("src_id");
+    String strDstId = ctx.formParam("dst_id");
+    String strProps = ctx.formParam("props");
 
     long timeStart = System.nanoTime();
     String result = "";
@@ -124,7 +124,7 @@ public class UpdateController {
     }
     long timeEnd = System.nanoTime();
     System.out.println("INFO: Execution Time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms (" + result + ")");
-    ctx.result(result);
+    ctx.result(result + "\n");
   };
 
 }

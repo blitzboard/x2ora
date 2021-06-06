@@ -45,8 +45,8 @@ public class Main {
 		RetrievalController.countNodes();
 
 		System.out.println("INFO: Ready to accept requests");
-		app.get("/merge_node/", UpdateController.mergeNode); 
-		app.get("/merge_edge/", UpdateController.mergeEdge);
+		app.post("/merge_node/", UpdateController.mergeNode); 
+		app.post("/merge_edge/", UpdateController.mergeEdge);
 		app.get("/node_match/", RetrievalController.nodeMatch);
 		app.get("/edge_match/", RetrievalController.edgeMatch);
 	}
