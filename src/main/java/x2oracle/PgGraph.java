@@ -3,6 +3,7 @@ package x2oracle;
 import java.util.HashSet;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Iterator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -116,6 +117,18 @@ class PgNode {
       e.printStackTrace();
     }
   }
+
+  public String getLabel() {
+    Iterator iterator = labels.iterator();
+    String label = (String)iterator.next();
+    return label;
+  }
+
+  public String getPropertiesJSON() throws JsonProcessingException {
+    ObjectMapper mapper = new ObjectMapper();
+    String json = mapper.writeValueAsString(properties);
+    return json;
+  }
 }
 
 class PgEdge {
@@ -154,7 +167,7 @@ class PgEdge {
   }
 
   public void setFrom(String from) {
-    this.to = from;
+    this.from = from;
   }
   public void setTo(String to) {
     this.to = to;
@@ -187,5 +200,17 @@ class PgEdge {
     } catch (JsonProcessingException e) {
       e.printStackTrace();
     }
+  }
+
+  public String getLabel() {
+    Iterator iterator = labels.iterator();
+    String label = (String)iterator.next();
+    return label;
+  }
+
+  public String getPropertiesJSON() throws JsonProcessingException {
+    ObjectMapper mapper = new ObjectMapper();
+    String json = mapper.writeValueAsString(properties);
+    return json;
   }
 }

@@ -10,12 +10,58 @@ import static x2oracle.Main.*;
 public class UpdateController {
 
   public static Handler mergeNode = ctx -> {
+    long timeStart = System.nanoTime();
 
-    String strLabel = ctx.formParam("label");
     String strId = ctx.formParam("id");
+    String strLabel = ctx.formParam("label");
     String strProps = ctx.formParam("props");
 
+    String result = mergeNode(strId, strLabel, strProps);
+    conn.commit();
+    long timeEnd = System.nanoTime();
+    System.out.println("INFO: Execution Time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms (" + result + ")");
+    ctx.result(result + "\n");
+  };
+
+  public static Handler mergeEdge = ctx -> {
     long timeStart = System.nanoTime();
+
+    String strSrcId = ctx.formParam("src_id");
+    String strDstId = ctx.formParam("dst_id");
+    String strLabel = ctx.formParam("label");
+    String strProps = ctx.formParam("props");
+
+    String result = mergeEdge(strSrcId, strDstId, strLabel, strProps);
+    conn.commit();
+    long timeEnd = System.nanoTime();
+    System.out.println("INFO: Execution Time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms (" + result + ")");
+    ctx.result(result + "\n");
+  };
+
+  public static Handler mergeGraph = ctx -> {
+    long timeStart = System.nanoTime();
+    
+    PgGraph pg = ctx.bodyAsClass(PgGraph.class);
+    System.out.println("INFO: Graph received (" + pg.countNodes() + " nodes, " + pg.countEdges() + " edges).");
+
+    for (PgNode node : pg.getNodes()) {
+      String result = mergeNode((String)node.getId(), node.getLabel(), node.getPropertiesJSON());
+      System.out.println(result);
+    }
+
+    for (PgEdge edge : pg.getEdges()) {
+      String result = mergeEdge((String)edge.getFrom(), (String)edge.getTo(), edge.getLabel(), edge.getPropertiesJSON());
+      System.out.println(result);
+    }
+    
+    String result = "";
+    conn.commit();
+    long timeEnd = System.nanoTime();
+    System.out.println("INFO: Execution Time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms (" + result + ")");
+    ctx.result(result + "\n");
+  };
+
+  private static String mergeNode(String strId, String strLabel, String strProps) {
     String result = "";
     try {
       Boolean able = true;
@@ -42,26 +88,16 @@ public class UpdateController {
         ps.setString(1, strId);
         ps.setString(2, strProps);
         ps.execute();
-        conn.commit();
         result = "Node " + strLabel + " " + strId + " is added.";
       }
       
     } catch (SQLException e) {
       result = printException(e);
     }
-    long timeEnd = System.nanoTime();
-    System.out.println("INFO: Execution Time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms (" + result + ")");
-    ctx.result(result + "\n");
+    return result;
   };
 
-  public static Handler mergeEdge = ctx -> {
-
-    String strLabel = ctx.formParam("label");
-    String strSrcId = ctx.formParam("src_id");
-    String strDstId = ctx.formParam("dst_id");
-    String strProps = ctx.formParam("props");
-
-    long timeStart = System.nanoTime();
+  private static String mergeEdge(String strSrcId, String strDstId, String strLabel, String strProps) {
     String result = "";
     try {
       
@@ -116,28 +152,12 @@ public class UpdateController {
         ps.setString(2, strSrcId);
         ps.setString(3, strDstId);
         ps.execute();
-        conn.commit();
         result = "Edge " + strLabel + " " + strSrcId + " -> " + strDstId + " is added.";
       }
       
     } catch (SQLException e) {
       result = printException(e);
     }
-    long timeEnd = System.nanoTime();
-    System.out.println("INFO: Execution Time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms (" + result + ")");
-    ctx.result(result + "\n");
-  };
-
-  public static Handler mergeGraph = ctx -> {
-
-    long timeStart = System.nanoTime();
-    
-    PgGraph pg = ctx.bodyAsClass(PgGraph.class);
-    System.out.println("INFO: Graph received (" + pg.countNodes() + " nodes, " + pg.countEdges() + " edges).");
-    
-    String result = "";
-    long timeEnd = System.nanoTime();
-    System.out.println("INFO: Execution Time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms (" + result + ")");
-    ctx.result(result + "\n");
+    return result;
   };
 }
