@@ -19,25 +19,45 @@ class PgResponse {
   }
 }
 
-class PgGraph {
-  //public Map<Object, PgNode> nodes = new HashMap<>();
-  //public Map<Object, PgEdge> edges = new HashMap<>();
-  public HashSet<PgNode> nodes = new HashSet<PgNode>();
-  public HashSet<PgEdge> edges = new HashSet<PgEdge>();
-  /*
-  public void addNode(Object id, PgNode node) {
-    nodes.put(id, node);
+class PgRequest {
+  public String option;
+  public PgGraph pg;
+  public void setOption(String option) {
+    this.option = option;
   }
-  public PgNode getNode(Object id) {
-    return nodes.get(id);
+  public void setPg(PgGraph pg) {
+    this.pg = pg;
   }
-  public void addEdge(Object id, PgEdge edge) {
-    edges.put(id, edge);
+}
+
+public class PgGraph {
+  private HashSet<PgNode> nodes = new HashSet<PgNode>();
+  private HashSet<PgEdge> edges = new HashSet<PgEdge>();
+
+  public PgGraph() {
   }
-  public PgEdge getEdge(Object id) {
-    return edges.get(id);
+  public PgGraph(HashSet<PgNode> nodes, HashSet<PgEdge> edges) {
+    this.nodes = nodes;
+    this.edges = edges;
   }
-  */
+  
+  public HashSet<PgNode> getNodes() {
+    return nodes;
+  }
+  public HashSet<PgEdge> getEdges() {
+    return edges;
+  }
+  public void setNodes(HashSet<PgNode> nodes) {
+      this.nodes = nodes;
+  }
+  public void setEdges(HashSet<PgEdge> edges) {
+    this.edges = edges;
+  }
+  
+  public Integer countNodes() {
+    System.out.println(this.nodes.size());
+    return this.nodes.size();
+  }
   public void addNode(PgNode node) {
     nodes.add(node);
   }

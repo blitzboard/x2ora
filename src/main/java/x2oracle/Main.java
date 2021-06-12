@@ -47,6 +47,7 @@ public class Main {
 		System.out.println("INFO: Ready to accept requests");
 		app.post("/merge_node/", UpdateController.mergeNode); 
 		app.post("/merge_edge/", UpdateController.mergeEdge);
+		app.post("/merge_graph/", UpdateController.mergeGraph);
 		app.get("/node_match/", RetrievalController.nodeMatch);
 		app.get("/edge_match/", RetrievalController.edgeMatch);
 	}

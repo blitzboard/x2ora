@@ -36,6 +36,7 @@ Update requests.
     curl -XPOST -d 'label=person&id=Taro&props={"age":[37]}' http://localhost:7000/merge_node
     curl -XPOST -d 'label=person&id=Jiro&props={"age":[36]}' http://localhost:7000/merge_node
     curl -XPOST -d 'label=knows&src_id=Taro&dst_id=Jiro&props={"since":[2017]}' http://localhost:7000/merge_edge
+    curl -XPOST -H "Content-Type: application/json" -d @sample/request.json http://localhost:7000/merge_graph
 
 Retrieval requests.
 

@@ -1,0 +1,111 @@
+{
+  "nodes": [
+    {
+      "id": "Shiro",
+      "labels": [
+        "person"
+      ],
+      "properties": {
+        "age": [
+          32
+        ]
+      }
+    },
+    {
+      "id": "Jiro",
+      "labels": [
+        "person"
+      ],
+      "properties": {
+        "age": [
+          36
+        ]
+      }
+    },
+    {
+      "id": "Taro",
+      "labels": [
+        "person"
+      ],
+      "properties": {
+        "age": [
+          37
+        ]
+      }
+    },
+    {
+      "id": "Taro",
+      "labels": [
+        "person"
+      ],
+      "properties": {
+        "age": [
+          37
+        ]
+      }
+    },
+    {
+      "id": "Jiro",
+      "labels": [
+        "person"
+      ],
+      "properties": {
+        "age": [
+          36
+        ]
+      }
+    },
+    {
+      "id": "Taro",
+      "labels": [
+        "person"
+      ],
+      "properties": {
+        "age": [
+          37
+        ]
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "Taro",
+      "to": "Shiro",
+      "undirected": false,
+      "labels": [
+        "knows"
+      ],
+      "properties": {
+        "since": [
+          2015
+        ]
+      }
+    },
+    {
+      "from": "Jiro",
+      "to": "Taro",
+      "undirected": false,
+      "labels": [
+        "knows"
+      ],
+      "properties": {
+        "since": [
+          2017
+        ]
+      }
+    },
+    {
+      "from": "Taro",
+      "to": "Jiro",
+      "undirected": false,
+      "labels": [
+        "knows"
+      ],
+      "properties": {
+        "since": [
+          2017
+        ]
+      }
+    }
+  ]
+}
