@@ -1,9 +1,6 @@
 package x2oracle;
 
-import java.util.*;
-//import com.fasterxml.jackson.databind.ObjectMapper;
-//import io.javalin.plugin.json.JavalinJackson;
-
+import java.util.HashMap;
 import io.javalin.http.Handler;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -134,11 +131,10 @@ public class UpdateController {
   public static Handler mergeGraph = ctx -> {
 
     long timeStart = System.nanoTime();
-
-    Map<String, PgGraph> request = ctx.bodyAsClass(Map.class);
-    System.out.println(request.get("pg"));
-    PgGraph pg = request.get("pg");
-
+    
+    PgGraph pg = ctx.bodyAsClass(PgGraph.class);
+    System.out.println("INFO: Graph received (" + pg.countNodes() + " nodes, " + pg.countEdges() + " edges).");
+    
     String result = "";
     long timeEnd = System.nanoTime();
     System.out.println("INFO: Execution Time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms (" + result + ")");

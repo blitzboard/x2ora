@@ -4,6 +4,7 @@ import io.javalin.http.Handler;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.HashMap;
 import static x2oracle.Main.*;
 
 public class RetrievalController {
@@ -65,9 +66,9 @@ public class RetrievalController {
     System.out.println("INFO: Execution time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms (" + result + ")");
     ctx.result(result);
     ctx.contentType("application/json");
-    PgResponse response = new PgResponse();
-    response.setRequest(ctx.fullUrl());
-    response.setPg(pg);
+    HashMap<String, Object> response = new HashMap<>();
+    response.put("request", ctx.fullUrl());
+    response.put("pg", pg);
     ctx.json(response);
   };
 
@@ -104,9 +105,9 @@ public class RetrievalController {
     System.out.println("INFO: Execution time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms (" + result + ")");
     ctx.result(result);
     ctx.contentType("application/json");
-    PgResponse response = new PgResponse();
-    response.setRequest(ctx.fullUrl());
-    response.setPg(pg);
+    HashMap<String, Object> response = new HashMap<>();
+    response.put("request", ctx.fullUrl());
+    response.put("pg", pg);
     ctx.json(response);
   };
 

@@ -1,41 +1,21 @@
 package x2oracle;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.HashMap;
+import java.util.List;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-// members are public for jackson to access and export as JSON
-
-class PgResponse {
-  public String request;
-  public PgGraph pg;
-  public void setRequest(String request) {
-    this.request = request;
-  }
-  public void setPg(PgGraph pg) {
-    this.pg = pg;
-  }
-}
-
-class PgRequest {
-  public String option;
-  public PgGraph pg;
-  public void setOption(String option) {
-    this.option = option;
-  }
-  public void setPg(PgGraph pg) {
-    this.pg = pg;
-  }
-}
-
 public class PgGraph {
-  private HashSet<PgNode> nodes = new HashSet<PgNode>();
-  private HashSet<PgEdge> edges = new HashSet<PgEdge>();
+
+  private HashSet<PgNode> nodes;
+  private HashSet<PgEdge> edges;
 
   public PgGraph() {
   }
+
   public PgGraph(HashSet<PgNode> nodes, HashSet<PgEdge> edges) {
     this.nodes = nodes;
     this.edges = edges;
@@ -47,17 +27,21 @@ public class PgGraph {
   public HashSet<PgEdge> getEdges() {
     return edges;
   }
+
   public void setNodes(HashSet<PgNode> nodes) {
-      this.nodes = nodes;
+    this.nodes = nodes;
   }
   public void setEdges(HashSet<PgEdge> edges) {
     this.edges = edges;
   }
   
   public Integer countNodes() {
-    System.out.println(this.nodes.size());
-    return this.nodes.size();
+    return nodes.size();
   }
+  public Integer countEdges() {
+    return edges.size();
+  }
+
   public void addNode(PgNode node) {
     nodes.add(node);
   }
@@ -79,19 +63,40 @@ public class PgGraph {
 }
 
 class PgNode {
-  public Object id;
-  public HashSet<String> labels = new HashSet<String>();
-  public HashMap<String, List<Object>> properties = new HashMap<>();
-  /*
-  public PgNode(Object id) {
-    this.id = id;
+
+  private Object id;
+  private HashSet<String> labels;
+  private HashMap<String, List<Object>> properties;
+
+  public PgNode() {
   }
-  */
+
   public PgNode(Object id, String label, String props) {
     this.id = id;
     this.addLabel(label);
     this.addProperties(props);
   }
+
+  public Object getId() {
+    return id;
+  }
+  public HashSet<String> getLabels() {
+    return labels;
+  }
+  public HashMap<String, List<Object>> getProperties() {
+    return properties;
+  }
+
+  public void setId(String id) {
+    this.id = id;
+  }
+  public void setLabels(HashSet<String> labels) {
+    this.labels = labels;
+  }
+  public void setProperties(HashMap<String, List<Object>> properties) {
+    this.properties = properties;
+  }
+
   public void addLabel(String label) {
     labels.add(label.toLowerCase());
   }
@@ -114,18 +119,16 @@ class PgNode {
 }
 
 class PgEdge {
-  public Object from;
-  public Object to;
-  public boolean undirected = false;
-  public HashSet<String> labels = new HashSet<String>();
-  public HashMap<String, List<Object>> properties = new HashMap<>();
-  /*
-  public PgEdge(Object from, Object to, boolean undirected) {
-    this.from = from;
-    this.to = to;
-    this.undirected = undirected;
+
+  private Object from;
+  private Object to;
+  private boolean undirected = false;
+  private HashSet<String> labels = new HashSet<String>();
+  private HashMap<String, List<Object>> properties = new HashMap<>();
+
+  public PgEdge() {
   }
-  */
+
   public PgEdge(Object from, Object to, boolean undirected, String label, String props) {
     this.from = from;
     this.to = to;
@@ -133,6 +136,39 @@ class PgEdge {
     this.addLabel(label);
     this.addProperties(props);
   }
+
+  public Object getFrom() {
+    return from;
+  }
+  public Object getTo() {
+    return to;
+  }
+  public boolean getUndirected() {
+    return undirected;
+  }
+  public HashSet<String> getLabels() {
+    return labels;
+  }
+  public HashMap<String, List<Object>> getProperties() {
+    return properties;
+  }
+
+  public void setFrom(String from) {
+    this.to = from;
+  }
+  public void setTo(String to) {
+    this.to = to;
+  }
+  public void setUndirected(boolean undirected) {
+    this.undirected = undirected;
+  }
+  public void setLabels(HashSet<String> labels) {
+    this.labels = labels;
+  }
+  public void setProperties(HashMap<String, List<Object>> properties) {
+    this.properties = properties;
+  }
+
   public void addLabel(String label) {
     labels.add(label.toLowerCase());
   }
