@@ -36,11 +36,15 @@ public class RetrievalController {
   public static Handler nodeMatch = ctx -> {
 
     String strIds = ctx.queryParam("node_ids[]", "");
+    String strLabels = ctx.queryParam("node_labels[]", "").toUpperCase();
     String strLimit = ctx.queryParam("limit", "1000");
     
     String strWhere = " WHERE 1 = 1";
     if (!strIds.isEmpty()) {
-      strWhere = strWhere + " AND v.id = (?)";
+      strWhere = strWhere + " AND v.id = '" + strIds + "'"; // Should be replaced to IN () in 21.3 
+    }
+    if (!strLabels.isEmpty()) {
+      strWhere = strWhere + " AND LABEL(v) = '" + strLabels + "'"; // Should be replaced to IN () in 21.3
     }
     String clauseLimit = " LIMIT " + strLimit;
     String strQuery = "SELECT v.id, LABEL(v), v.json FROM MATCH (v) ON " + strGraph + strWhere + clauseLimit;    
@@ -48,15 +52,11 @@ public class RetrievalController {
 
     long timeStart = System.nanoTime();
     String result = "";
-    PgGraph pg = new PgGraph();;
+    PgGraph pg = new PgGraph();
     try {
-      PreparedStatement ps;
-      ResultSet rs;
-
-      ps = conn.prepareStatement(strQuery);
-      ps.setString(1, strIds);
+      PreparedStatement ps = conn.prepareStatement(strQuery);
       ps.execute();
-      rs = ps.getResultSet();
+      ResultSet rs = ps.getResultSet();
       result = "Nodes with ID [" + strIds + "] are retrieved.";
       pg = getResultPG(rs, 1, 0);
     } catch (SQLException e) {
@@ -79,7 +79,7 @@ public class RetrievalController {
 
     String strWhere = " WHERE 1 = 1";
     if (!strLabels.isEmpty()) {
-      strWhere = strWhere + " AND LABEL(e) = ?";
+      strWhere = strWhere + " AND LABEL(e) = '" + strLabels + "'"; // Should be replaced to IN () in 21.3
     }
     String clauseLimit = " LIMIT " + strLimit;
     String strQuery = "SELECT v1.id AS v1_id, LABEL(v1) AS v1_label, v1.json AS v1_json, v2.id AS v2_id, LABEL(v2) AS v2_label, v2.json AS v2_json, ID(e), v1.id AS src, v2.id AS dst, LABEL(e), e.json FROM MATCH (v1)-[e]->(v2) ON " + strGraph + strWhere + clauseLimit;
@@ -89,13 +89,9 @@ public class RetrievalController {
     String result = "";
     PgGraph pg = new PgGraph();
     try {
-      PreparedStatement ps;
-      ResultSet rs;
-
-      ps = conn.prepareStatement(strQuery);
-      ps.setString(1, strLabels);
+      PreparedStatement ps = conn.prepareStatement(strQuery);
       ps.execute();
-      rs = ps.getResultSet();
+      ResultSet rs = ps.getResultSet();
       result = "Edge(s) with Label = " + strLabels + " are retrieved.";
       pg = getResultPG(rs, 2, 1);
     } catch (SQLException e) {
@@ -121,13 +117,13 @@ public class RetrievalController {
 
 				int offsetEdge = countNode * lengthNode; // Edge Offset
 				int offsetNodeList = offsetEdge + (countEdge * lengthEdge); // Node List Offset
-
+        
 				// Nodes
 				for (int i = 1; i <= offsetEdge; i = i + lengthNode) {
 					Object id = rs.getObject(i);
 					String label = rs.getString(i + 1);
           String props = rs.getString(i + 2);
-					PgNode node = new PgNode(id, label, props);
+          PgNode node = new PgNode(id, label, props);
 		      pg.addNode(node);
 				}
 				// Edges
@@ -146,18 +142,4 @@ public class RetrievalController {
 		}
 		return pg;
 	}
-
-  /*
-	private static void addNodeById(PgGraph pg, Object id, String label, String props) {
-		//PgNode node = new PgNode(id);
-		//node.addLabel(label);
-    PgNode node = new PgNode(id, label, props);
-		pg.addNode(node);
-	}
-	private static void addEdgeByIds(PgGraph pg, Object id, Object idSrc, Object idDst, String label) {
-		PgEdge edge = new PgEdge(idSrc, idDst, false);
-		edge.addLabel(label);
-		pg.addEdge(id, edge);
-	}
-  */
 }

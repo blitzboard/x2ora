@@ -10,8 +10,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class PgGraph {
 
-  private HashSet<PgNode> nodes;
-  private HashSet<PgEdge> edges;
+  private HashSet<PgNode> nodes = new HashSet<>();
+  private HashSet<PgEdge> edges = new HashSet<>();
 
   public PgGraph() {
   }
@@ -65,8 +65,8 @@ public class PgGraph {
 class PgNode {
 
   private Object id;
-  private HashSet<String> labels;
-  private HashMap<String, List<Object>> properties;
+  private HashSet<String> labels = new HashSet<>();
+  private HashMap<String, List<Object>> properties = new HashMap<>();
 
   public PgNode() {
   }
@@ -98,7 +98,7 @@ class PgNode {
   }
 
   public void addLabel(String label) {
-    labels.add(label.toLowerCase());
+    this.labels.add(label.toLowerCase());
   }
   /*
   public void addProperty(String key, Object value) {
@@ -123,7 +123,7 @@ class PgEdge {
   private Object from;
   private Object to;
   private boolean undirected = false;
-  private HashSet<String> labels = new HashSet<String>();
+  private HashSet<String> labels = new HashSet<>();
   private HashMap<String, List<Object>> properties = new HashMap<>();
 
   public PgEdge() {

@@ -43,7 +43,7 @@ curl -XPOST -H "Content-Type: application/json" -d @sample/graph.json http://loc
 Retrieval requests.
 
 ```
-curl 'http://localhost:7000/node_match/?node_ids[]=Taro&limit=100'
+curl 'http://localhost:7000/node_match/?node_ids[]=Taro&node_labels[]=person&limit=100'
 curl 'http://localhost:7000/edge_match/?edge_labels[]=knows&limit=100'
 ```
 
@@ -52,7 +52,8 @@ curl 'http://localhost:7000/edge_match/?edge_labels[]=knows&limit=100'
 The full X2 API is described at https://g2glab.github.io/x2/. However, x2ora supports the subset of the API below.
 
 - /node_match
-  - node_ids
+  - node_ids[]
+  - node_labels[]
   - limit
 - /edge_match
   - edge_labels
