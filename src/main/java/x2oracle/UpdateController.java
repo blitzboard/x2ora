@@ -1,6 +1,5 @@
 package x2oracle;
 
-import java.util.HashMap;
 import io.javalin.http.Handler;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -89,6 +88,18 @@ public class UpdateController {
         ps.setString(2, strProps);
         ps.execute();
         result = "Node " + strLabel + " " + strId + " is added.";
+      } else {
+        // The update query below gets PgqlToSqlException so this operation is skipped now
+        /*
+        String query = "UPDATE v SET (v.json = ?) FROM MATCH (v) ON " + strLabel + " WHERE LABEL(v) = ? AND v.id = ?";			
+        System.out.println(query);
+        ps = conn.prepareStatement(query);
+        ps.setString(1, strProps);
+        ps.setString(2, strLabel.toUpperCase());
+        ps.setString(3, strId);
+        ps.execute();
+        result = "Node " + strLabel + " " + strId + " is update.";
+        */
       }
       
     } catch (SQLException e) {
