@@ -2,7 +2,7 @@
 
 Clone this repository.
 
-    $ git clone https://github.com/g2glab/x2ora.git
+    git clone https://github.com/g2glab/x2ora.git
 
 Download Oracle Graph Client library.
 
@@ -10,26 +10,26 @@ Download Oracle Graph Client library.
 
 Locate and unzip the library under `x2ora` directory.
 
-    $ cd ~/x2ora/
-    $ unzip oracle-graph-client-21.2.0.zip
+    cd ~/x2ora/
+    unzip oracle-graph-client-21.3.0.zip
 
 Set database login information.
 
-    $ cd ~/x2orasrc/main/resources/
-    $ cp common.sample.properties common.properties
-    $ vi common.properties
+    cd ~/x2ora/src/main/resources/
+    cp common.sample.properties common.properties
+    vi common.properties
 
 Run Gradle.
 
-    $ cd ~/x2ora/
-    $ ./gradlew run
+    cd ~/x2ora/
+    ./gradlew run
 
 FYI, how to modify the firewall setting to open the port 7000 and 7001.
 
-    $ sudo firewall-cmd --list-all
-    $ sudo firewall-cmd --zone=public --add-port=7000/tcp --permanent
-    $ sudo firewall-cmd --zone=public --add-port=7001/tcp --permanent
-    $ sudo firewall-cmd --reload
+    sudo firewall-cmd --list-all
+    sudo firewall-cmd --zone=public --add-port=7000/tcp --permanent
+    sudo firewall-cmd --zone=public --add-port=7001/tcp --permanent
+    sudo firewall-cmd --reload
 
 Update requests.
 
