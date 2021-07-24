@@ -18,7 +18,7 @@ public class RetrievalController {
       ResultSet rs;
 
       // Check if the node exists
-      ps = conn.prepareStatement("SELECT COUNT(v) FROM MATCH (v) ON " + strGraph);
+      ps = conn.prepareStatement("SELECT COUNT(v) FROM MATCH (v) ON " + strGraphPreset);
       ps.execute();
       rs = ps.getResultSet();
       if (rs.first()){
@@ -35,6 +35,7 @@ public class RetrievalController {
 
   public static Handler nodeMatch = ctx -> {
 
+    String strGraph = ctx.queryParam("graph", strGraphPreset);
     String strIds = ctx.queryParam("node_ids[]", "");
     String strLabels = ctx.queryParam("node_labels[]", "").toUpperCase();
     String strLimit = ctx.queryParam("limit", "1000");
@@ -74,6 +75,7 @@ public class RetrievalController {
 
   public static Handler edgeMatch = ctx -> {
 
+    String strGraph = ctx.queryParam("graph", strGraphPreset);
     String strLabels = ctx.queryParam("edge_labels[]", "").toUpperCase();
     String strLimit = ctx.queryParam("limit", "1000");
 
@@ -97,6 +99,44 @@ public class RetrievalController {
     } catch (SQLException e) {
       result = printException(e);
     }
+    long timeEnd = System.nanoTime();
+    System.out.println("INFO: Execution time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms (" + result + ")");
+    ctx.result(result);
+    ctx.contentType("application/json");
+    HashMap<String, Object> response = new HashMap<>();
+    response.put("request", ctx.fullUrl());
+    response.put("pg", pg);
+    ctx.json(response);
+  };
+
+  public static Handler shortest = ctx -> {
+
+    String strGraph = ctx.queryParam("graph", strGraphPreset);
+    String strFromNodeId = ctx.queryParam("from_node_id", "");
+    String strToNodeId = ctx.queryParam("to_node_id", "");
+    String strTopK = ctx.queryParam("top_k", "1");
+    String strLimit = ctx.queryParam("limit", "1000");
+
+    String strWhere = " WHERE ID(v1) = '" + strFromNodeId + "' AND ID(v2) = '" + strToNodeId + "'";
+    String clauseLimit = " LIMIT " + strLimit;
+    String strQuery = "SELECT ARRAY_AGG(ID(e)) AS edges FROM MATCH TOP " + strTopK + " SHORTEST ((v1) (-[e]->(v))* (v2)) ON " + strGraph + strWhere + clauseLimit;
+    System.out.println("INFO: A request is received: " + strQuery);
+
+    long timeStart = System.nanoTime();
+    String result = "";
+    PgGraph pg = new PgGraph();
+    try {
+      PreparedStatement ps = conn.prepareStatement(strQuery);
+      ps.execute();
+      ResultSet rs = ps.getResultSet();
+      result = "Edge(s) are retrieved.";
+      while (rs.next()) {
+        System.out.println(rs.getString(1));
+      }
+    } catch (SQLException e) {
+      result = printException(e);
+    }
+
     long timeEnd = System.nanoTime();
     System.out.println("INFO: Execution time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms (" + result + ")");
     ctx.result(result);

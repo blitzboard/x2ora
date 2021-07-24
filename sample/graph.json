@@ -1,7 +1,7 @@
 {
   "nodes": [
     {
-      "id": "Shiro",
+      "id": "Alice",
       "labels": [
         "person"
       ],
@@ -12,7 +12,7 @@
       }
     },
     {
-      "id": "Jiro",
+      "id": "Bob",
       "labels": [
         "person"
       ],
@@ -23,7 +23,7 @@
       }
     },
     {
-      "id": "Taro",
+      "id": "Carol",
       "labels": [
         "person"
       ],
@@ -34,18 +34,7 @@
       }
     },
     {
-      "id": "Taro",
-      "labels": [
-        "person"
-      ],
-      "properties": {
-        "age": [
-          37
-        ]
-      }
-    },
-    {
-      "id": "Jiro",
+      "id": "David",
       "labels": [
         "person"
       ],
@@ -56,21 +45,24 @@
       }
     },
     {
-      "id": "Taro",
+      "id": "Elle",
       "labels": [
         "person"
       ],
-      "properties": {
-        "age": [
-          37
-        ]
-      }
+      "properties": {}
+    },
+    {
+      "id": "Fred",
+      "labels": [
+        "person"
+      ],
+      "properties": {}
     }
   ],
   "edges": [
     {
-      "from": "Taro",
-      "to": "Shiro",
+      "from": "Alice",
+      "to": "Bob",
       "undirected": false,
       "labels": [
         "knows"
@@ -82,8 +74,8 @@
       }
     },
     {
-      "from": "Jiro",
-      "to": "Taro",
+      "from": "Bob",
+      "to": "Carol",
       "undirected": false,
       "labels": [
         "knows"
@@ -95,8 +87,47 @@
       }
     },
     {
-      "from": "Taro",
-      "to": "Jiro",
+      "from": "Carol",
+      "to": "David",
+      "undirected": false,
+      "labels": [
+        "knows"
+      ],
+      "properties": {
+        "since": [
+          2017
+        ]
+      }
+    },
+    {
+      "from": "Bob",
+      "to": "Elle",
+      "undirected": false,
+      "labels": [
+        "knows"
+      ],
+      "properties": {
+        "since": [
+          2017
+        ]
+      }
+    },
+    {
+      "from": "Elle",
+      "to": "Fred",
+      "undirected": false,
+      "labels": [
+        "knows"
+      ],
+      "properties": {
+        "since": [
+          2017
+        ]
+      }
+    },
+    {
+      "from": "Fred",
+      "to": "David",
       "undirected": false,
       "labels": [
         "knows"

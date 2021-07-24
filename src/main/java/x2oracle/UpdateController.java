@@ -11,11 +11,12 @@ public class UpdateController {
   public static Handler mergeNode = ctx -> {
     long timeStart = System.nanoTime();
 
+    String strGraph = ctx.formParam("graph", strGraphPreset);
     String strId = ctx.formParam("id");
     String strLabel = ctx.formParam("label");
     String strProps = ctx.formParam("props");
 
-    String result = mergeNode(strId, strLabel, strProps);
+    String result = mergeNode(strGraph, strId, strLabel, strProps);
     conn.commit();
     long timeEnd = System.nanoTime();
     System.out.println("INFO: Execution Time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms (" + result + ")");
@@ -25,12 +26,13 @@ public class UpdateController {
   public static Handler mergeEdge = ctx -> {
     long timeStart = System.nanoTime();
 
+    String strGraph = ctx.formParam("graph", strGraphPreset);
     String strSrcId = ctx.formParam("src_id");
     String strDstId = ctx.formParam("dst_id");
     String strLabel = ctx.formParam("label");
     String strProps = ctx.formParam("props");
 
-    String result = mergeEdge(strSrcId, strDstId, strLabel, strProps);
+    String result = mergeEdge(strGraph, strSrcId, strDstId, strLabel, strProps);
     conn.commit();
     long timeEnd = System.nanoTime();
     System.out.println("INFO: Execution Time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms (" + result + ")");
@@ -44,12 +46,12 @@ public class UpdateController {
     System.out.println("INFO: Graph received (" + pg.countNodes() + " nodes, " + pg.countEdges() + " edges).");
 
     for (PgNode node : pg.getNodes()) {
-      String result = mergeNode((String)node.getId(), node.getLabel(), node.getPropertiesJSON());
+      String result = mergeNode(strGraphPreset, (String)node.getId(), node.getLabel(), node.getPropertiesJSON());
       System.out.println(result);
     }
 
     for (PgEdge edge : pg.getEdges()) {
-      String result = mergeEdge((String)edge.getFrom(), (String)edge.getTo(), edge.getLabel(), edge.getPropertiesJSON());
+      String result = mergeEdge(strGraphPreset, (String)edge.getFrom(), (String)edge.getTo(), edge.getLabel(), edge.getPropertiesJSON());
       System.out.println(result);
     }
     
@@ -60,7 +62,7 @@ public class UpdateController {
     ctx.result(result + "\n");
   };
 
-  private static String mergeNode(String strId, String strLabel, String strProps) {
+  private static String mergeNode(String strGraph, String strId, String strLabel, String strProps) {
     String result = "";
     try {
       Boolean able = true;
@@ -108,7 +110,7 @@ public class UpdateController {
     return result;
   };
 
-  private static String mergeEdge(String strSrcId, String strDstId, String strLabel, String strProps) {
+  private static String mergeEdge(String strGraph, String strSrcId, String strDstId, String strLabel, String strProps) {
     String result = "";
     try {
       

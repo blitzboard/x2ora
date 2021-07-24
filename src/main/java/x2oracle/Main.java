@@ -15,7 +15,7 @@ import org.eclipse.jetty.util.ssl.SslContextFactory;
 public class Main {
 
 	public static Connection conn;
-	public static String strGraph;
+	public static String strGraphPreset;
 
 	public static void main(String[] args) throws Exception {
 		Javalin app = Javalin.create(config -> {
@@ -39,7 +39,7 @@ public class Main {
 			rb.getString("password")
 			);
 		conn.setAutoCommit(false);
-		strGraph = rb.getString("graph");
+		strGraphPreset = rb.getString("graph");
 
 		// Run a test query at startup
 		RetrievalController.countNodes();
@@ -50,6 +50,7 @@ public class Main {
 		app.post("/merge_graph/", UpdateController.mergeGraph);
 		app.get("/node_match/", RetrievalController.nodeMatch);
 		app.get("/edge_match/", RetrievalController.edgeMatch);
+		app.get("/shortest/", RetrievalController.shortest);
 	}
 	
 	private static SslContextFactory getSslContextFactory() {
