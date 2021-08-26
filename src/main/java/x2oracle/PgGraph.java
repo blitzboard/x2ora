@@ -49,6 +49,13 @@ public class PgGraph {
   public void addEdge(PgEdge edge) {
     edges.add(edge);
   }
+
+  public boolean hasNodeId(Object id) {
+    for(PgNode node : nodes) {
+      if (node.getId().equals(id)) return true;
+    }
+    return false;
+  }
   /*
   public String exportJSON() {
     ObjectMapper mapper = new ObjectMapper();

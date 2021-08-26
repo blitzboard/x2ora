@@ -161,10 +161,12 @@ public class RetrievalController {
 				// Nodes
 				for (int i = 1; i <= offsetEdge; i = i + lengthNode) {
 					Object id = rs.getObject(i);
-					String label = rs.getString(i + 1);
-          String props = rs.getString(i + 2);
-          PgNode node = new PgNode(id, label, props);
-		      pg.addNode(node);
+          if (!pg.hasNodeId(id)) {
+            String label = rs.getString(i + 1);
+            String props = rs.getString(i + 2);
+            PgNode node = new PgNode(id, label, props);
+            pg.addNode(node);
+          }
 				}
 				// Edges
 				for (int i = offsetEdge + 1; i <= offsetNodeList; i = i + lengthEdge) {
