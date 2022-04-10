@@ -6,6 +6,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import static x2oracle.Main.*;
 
+import oracle.pg.rdbms.pgql.PgqlConnection;
+import oracle.pg.rdbms.pgql.PgqlResultSet;
+import oracle.pgql.lang.PgqlException;
+import oracle.pg.rdbms.pgql.PgqlPreparedStatement;
+
 public class UpdateController {
 
   public static Handler mergeNode = ctx -> {
@@ -66,16 +71,18 @@ public class UpdateController {
     String result = "";
     try {
       Boolean able = true;
-      PreparedStatement ps;
-      ResultSet rs;
-
+      //PreparedStatement ps;
+      //ResultSet rs;
+      PgqlConnection pgqlConn = PgqlConnection.getConnection(conn);
+      PgqlPreparedStatement ps = pgqlConn.prepareStatement("SELECT COUNT(v) FROM MATCH (v) ON " + strGraphPreset);
+      
       // Check if the node exists
       if (able) {
-        ps = conn.prepareStatement("SELECT ID(v) FROM MATCH (v) ON " + strGraph + " WHERE LABEL(v) = ? AND v.id = ?");
+        //ps = conn.prepareStatement("SELECT ID(v) FROM MATCH (v) ON " + strGraph + " WHERE LABEL(v) = ? AND v.id = ?");
         ps.setString(1, strLabel.toUpperCase());
         ps.setString(2, strId);
         ps.execute();
-        rs = ps.getResultSet();
+        PgqlResultSet rs = ps.getResultSet();
         if (rs.first()){
           able = false;
           result = "Node " + strLabel + " " + strId + " exists.";
@@ -85,7 +92,7 @@ public class UpdateController {
       // Insert the node if not exists
       if (able) {
         String query = "INSERT INTO " + strGraph + " VERTEX v LABELS (" + strLabel + ") PROPERTIES (v.id = ?, v.json = ?)";			
-        ps = conn.prepareStatement(query);
+        //ps = conn.prepareStatement(query);
         ps.setString(1, strId);
         ps.setString(2, strProps);
         ps.execute();
@@ -104,7 +111,7 @@ public class UpdateController {
         */
       }
       
-    } catch (SQLException e) {
+    } catch (PgqlException e) {
       result = printException(e);
     }
     return result;

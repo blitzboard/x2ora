@@ -7,6 +7,11 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import static x2oracle.Main.*;
 
+import oracle.pg.rdbms.pgql.PgqlConnection;
+import oracle.pg.rdbms.pgql.PgqlResultSet;
+import oracle.pg.rdbms.pgql.PgqlPreparedStatement;
+import oracle.pgql.lang.PgqlException;
+
 public class RetrievalController {
 
   public static String countNodes() {
@@ -14,18 +19,24 @@ public class RetrievalController {
     long timeStart = System.nanoTime();
     String result = "";
     try {
+      /*
       PreparedStatement ps;
       ResultSet rs;
-
       // Check if the node exists
       ps = conn.prepareStatement("SELECT COUNT(v) FROM MATCH (v) ON " + strGraphPreset);
       ps.execute();
       rs = ps.getResultSet();
+      */
+
+      PgqlConnection pgqlConn = PgqlConnection.getConnection(conn);
+      PgqlPreparedStatement ps = pgqlConn.prepareStatement("SELECT COUNT(v) FROM MATCH (v) ON " + strGraphPreset);
+      PgqlResultSet rs = ps.executeQuery();
+
       if (rs.first()){
         result = "Test query succeeded.";
       }
     
-    } catch (SQLException e) {
+    } catch (PgqlException e) {
       result = printException(e);
     }
     long timeEnd = System.nanoTime();
@@ -48,19 +59,20 @@ public class RetrievalController {
       strWhere = strWhere + " AND LABEL(v) = '" + strLabels + "'"; // Should be replaced to IN () in 21.3
     }
     String clauseLimit = " LIMIT " + strLimit;
-    String strQuery = "SELECT v.id, LABEL(v), v.json FROM MATCH (v) ON " + strGraph + strWhere + clauseLimit;    
+    String strQuery = "SELECT v.id, LABEL(v), v.props FROM MATCH (v) ON " + strGraph + strWhere + clauseLimit;    
     System.out.println("INFO: A request is received: " + strQuery);
 
     long timeStart = System.nanoTime();
     String result = "";
     PgGraph pg = new PgGraph();
     try {
-      PreparedStatement ps = conn.prepareStatement(strQuery);
+      PgqlConnection pgqlConn = PgqlConnection.getConnection(conn);
+      PgqlPreparedStatement ps = pgqlConn.prepareStatement(strQuery);
       ps.execute();
-      ResultSet rs = ps.getResultSet();
+      PgqlResultSet rs = ps.getResultSet();
       result = "Nodes with ID [" + strIds + "] are retrieved.";
       pg = getResultPG(rs, 1, 0);
-    } catch (SQLException e) {
+    } catch (PgqlException e) {
       result = printException(e);
     }
     long timeEnd = System.nanoTime();
@@ -84,19 +96,20 @@ public class RetrievalController {
       strWhere = strWhere + " AND LABEL(e) = '" + strLabels + "'"; // Should be replaced to IN () in 21.3
     }
     String clauseLimit = " LIMIT " + strLimit;
-    String strQuery = "SELECT v1.id AS v1_id, LABEL(v1) AS v1_label, v1.json AS v1_json, v2.id AS v2_id, LABEL(v2) AS v2_label, v2.json AS v2_json, ID(e), v1.id AS src, v2.id AS dst, LABEL(e), e.json FROM MATCH (v1)-[e]->(v2) ON " + strGraph + strWhere + clauseLimit;
+    String strQuery = "SELECT v1.id AS v1_id, LABEL(v1) AS v1_label, v1.props AS v1_props, v2.id AS v2_id, LABEL(v2) AS v2_label, v2.props AS v2_props, ID(e), v1.id AS src, v2.id AS dst, LABEL(e), e.props FROM MATCH (v1)-[e]->(v2) ON " + strGraph + strWhere + clauseLimit;
     System.out.println("INFO: A request is received: " + strQuery);
 
     long timeStart = System.nanoTime();
     String result = "";
     PgGraph pg = new PgGraph();
     try {
-      PreparedStatement ps = conn.prepareStatement(strQuery);
+      PgqlConnection pgqlConn = PgqlConnection.getConnection(conn);
+      PgqlPreparedStatement ps = pgqlConn.prepareStatement(strQuery);
       ps.execute();
-      ResultSet rs = ps.getResultSet();
+      PgqlResultSet rs = ps.getResultSet();
       result = "Edge(s) with Label = " + strLabels + " are retrieved.";
       pg = getResultPG(rs, 2, 1);
-    } catch (SQLException e) {
+    } catch (PgqlException e) {
       result = printException(e);
     }
     long timeEnd = System.nanoTime();
@@ -147,7 +160,7 @@ public class RetrievalController {
     ctx.json(response);
   };
 
-	private static PgGraph getResultPG(ResultSet rs, int countNode, int countEdge) {
+	private static PgGraph getResultPG(PgqlResultSet rs, int countNode, int countEdge) {
 		PgGraph pg = new PgGraph();
 		try {
 			while (rs.next()) {
@@ -179,7 +192,7 @@ public class RetrievalController {
           pg.addEdge(edge);
 				}
 			}
-		} catch (SQLException e) {
+		} catch (PgqlException e) {
 			e.printStackTrace();
 		}
 		return pg;

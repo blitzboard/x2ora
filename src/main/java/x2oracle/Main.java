@@ -1,8 +1,8 @@
 package x2oracle;
 
 import io.javalin.Javalin;
-import oracle.pg.rdbms.pgql.jdbc.PgqlJdbcRdbmsDriver;
-import java.sql.DriverManager;
+//import oracle.pg.rdbms.pgql.jdbc.PgqlJdbcRdbmsDriver;
+//import java.sql.DriverManager;
 import java.sql.Connection;
 import java.util.ResourceBundle;
 import java.io.PrintWriter;
@@ -11,6 +11,9 @@ import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
+
+import oracle.ucp.jdbc.PoolDataSourceFactory;
+import oracle.ucp.jdbc.PoolDataSource;
 
 public class Main {
 
@@ -32,6 +35,7 @@ public class Main {
 		}).start();
 		
 		ResourceBundle rb = ResourceBundle.getBundle("common");
+		/*
 		DriverManager.registerDriver(new PgqlJdbcRdbmsDriver());
 		conn = DriverManager.getConnection(
 			rb.getString("jdbc_url"),
@@ -39,6 +43,13 @@ public class Main {
 			rb.getString("password")
 			);
 		conn.setAutoCommit(false);
+		*/
+		PoolDataSource pds = PoolDataSourceFactory.getPoolDataSource();
+		pds.setConnectionFactoryClassName("oracle.jdbc.pool.OracleDataSource");
+		pds.setURL(rb.getString("jdbc_url"));
+		pds.setUser(rb.getString("username"));
+		pds.setPassword(rb.getString("password"));
+		conn = pds.getConnection();
 		strGraphPreset = rb.getString("graph");
 
 		// Run a test query at startup

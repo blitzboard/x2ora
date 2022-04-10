@@ -35,5 +35,6 @@ dependencies {
     compile 'io.javalin:javalin:3.7.0'
     
     // Oracle Graph Client
-    compile fileTree(dir: './oracle-graph-client-21.3.0/lib/', include: '*.jar', exclude: 'ons-18.3.0.jar')
+    compile fileTree(dir: './oracle-graph-client-22.1.0/lib/', include: '*.jar', exclude: 'ons-19.12.0.0.jar')
+    //compile fileTree(dir: './oracle-graph-client-22.1.0/lib/', include: '*.jar')
 }
