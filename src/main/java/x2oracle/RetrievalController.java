@@ -14,20 +14,22 @@ import oracle.pgql.lang.PgqlException;
 
 public class RetrievalController {
 
-  public static String countNodes() {
+  public static String countNodes() throws Exception {
 
     long timeStart = System.nanoTime();
     String result = "";
     try {
+      
+      // PG Schema
       /*
-      PreparedStatement ps;
-      ResultSet rs;
-      // Check if the node exists
-      ps = conn.prepareStatement("SELECT COUNT(v) FROM MATCH (v) ON " + strGraphPreset);
-      ps.execute();
-      rs = ps.getResultSet();
+      PreparedStatement ps_pgs;
+      ResultSet rs_pgs;
+      ps_pgs = conn_pgs.prepareStatement("SELECT COUNT(v) FROM MATCH (v) ON " + strGraphPreset);
+      ps_pgs.execute();
+      rs_pgs = ps_pgs.getResultSet();
       */
 
+      // PG View
       PgqlConnection pgqlConn = PgqlConnection.getConnection(conn);
       PgqlPreparedStatement ps = pgqlConn.prepareStatement("SELECT COUNT(v) FROM MATCH (v) ON " + strGraphPreset);
       PgqlResultSet rs = ps.executeQuery();
@@ -43,7 +45,7 @@ public class RetrievalController {
     System.out.println("INFO: Execution Time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms (" + result + ")");
     return result;
   };
-
+  
   public static Handler nodeMatch = ctx -> {
 
     String strGraph = ctx.queryParam("graph", strGraphPreset);

@@ -12,12 +12,22 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
 import oracle.ucp.jdbc.PoolDataSourceFactory;
 import oracle.ucp.jdbc.PoolDataSource;
+
+import oracle.pg.rdbms.GraphServer;
+import oracle.pgx.api.*;	
 
 public class Main {
 
 	public static Connection conn;
+	public static PgxSession pgxSession;
+	//public static Connection conn_pgs;
 	public static String strGraphPreset;
 
 	public static void main(String[] args) throws Exception {
@@ -35,21 +45,35 @@ public class Main {
 		}).start();
 		
 		ResourceBundle rb = ResourceBundle.getBundle("common");
+
+		// Connection for PGX
+		ServerInstance instance = GraphServer.getInstance(
+			rb.getString("base_url"),
+			rb.getString("username"),
+			rb.getString("password").toCharArray()
+		);
+		pgxSession = instance.createSession("x2ora");
+		//PgxGraph graph = session.getGraph(rb.getString("graph"));
+
+		// Connection for PGS
 		/*
 		DriverManager.registerDriver(new PgqlJdbcRdbmsDriver());
-		conn = DriverManager.getConnection(
+		conn_pgx = DriverManager.getConnection(
 			rb.getString("jdbc_url"),
 			rb.getString("username"),
 			rb.getString("password")
 			);
-		conn.setAutoCommit(false);
+		conn_pgx.setAutoCommit(false);
 		*/
+
+	  // Connection for PGV
 		PoolDataSource pds = PoolDataSourceFactory.getPoolDataSource();
 		pds.setConnectionFactoryClassName("oracle.jdbc.pool.OracleDataSource");
 		pds.setURL(rb.getString("jdbc_url"));
 		pds.setUser(rb.getString("username"));
 		pds.setPassword(rb.getString("password"));
 		conn = pds.getConnection();
+		conn.setAutoCommit(false);
 		strGraphPreset = rb.getString("graph");
 
 		// Run a test query at startup
