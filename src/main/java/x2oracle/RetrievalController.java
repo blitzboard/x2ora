@@ -12,32 +12,22 @@ import oracle.pg.rdbms.pgql.PgqlResultSet;
 import oracle.pg.rdbms.pgql.PgqlPreparedStatement;
 import oracle.pgql.lang.PgqlException;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+
 public class RetrievalController {
 
   public static String countNodes() throws Exception {
-
     long timeStart = System.nanoTime();
     String result = "";
     try {
-      
-      // PG Schema
-      /*
-      PreparedStatement ps_pgs;
-      ResultSet rs_pgs;
-      ps_pgs = conn_pgs.prepareStatement("SELECT COUNT(v) FROM MATCH (v) ON " + strGraphPreset);
-      ps_pgs.execute();
-      rs_pgs = ps_pgs.getResultSet();
-      */
-
-      // PG View
       PgqlConnection pgqlConn = PgqlConnection.getConnection(conn);
       PgqlPreparedStatement ps = pgqlConn.prepareStatement("SELECT COUNT(v) FROM MATCH (v) ON " + strGraphPreset);
       PgqlResultSet rs = ps.executeQuery();
-
       if (rs.first()){
         result = "Test query succeeded.";
       }
-    
     } catch (PgqlException e) {
       result = printException(e);
     }
@@ -45,7 +35,61 @@ public class RetrievalController {
     System.out.println("INFO: Execution Time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms (" + result + ")");
     return result;
   };
-  
+
+  public static Handler query = ctx -> {
+
+    String strGraph = ctx.queryParam("graph", strGraphPreset);
+    String strQuery = ctx.queryParam("query", "");
+    
+    strQuery = strQuery + "ON " + strGraph;
+    System.out.println("INFO: A request is received: " + strQuery);
+
+    // Count numbers of nodes and edges
+    String strSelect = "SELECT ";
+    int cntNode = 0; 
+    Matcher matcherNode = Pattern.compile("\\((\\w+)\\)").matcher(strQuery);
+    while (matcherNode.find()) {
+      System.out.println("\n\n\nNode: " + matcherNode.group(1) + "\n\n\n");
+      String v = matcherNode.group(1);
+      strSelect = strSelect + v + ".id AS " + v + "_id, " + v + ".label AS " + v + "_label, " + v + ".props AS " + v + "_props, ";
+      cntNode++;
+    }
+    int cntEdge = 0; 
+    Matcher matcherEdge = Pattern.compile("\\[(\\w+)\\]").matcher(strQuery);
+    while (matcherEdge.find()) {
+      System.out.println("\n\n\nEdge: " + matcherEdge.group(1) + "\n\n\n");
+      String v = matcherEdge.group(1);
+      strSelect = strSelect + v + ".id AS " + v + "_id, " + v + ".label AS " + v + "_label, " + v + ".props AS " + v + "_props, ";
+      cntEdge++;
+    }
+    strSelect = strSelect + "1 ";    
+
+    strQuery = strSelect + "FROM " + strQuery;
+    System.out.println("INFO: Query is modified: " + strQuery);
+
+    long timeStart = System.nanoTime();
+    String result = "";
+    PgGraph pg = new PgGraph();
+    try {
+      PgqlConnection pgqlConn = PgqlConnection.getConnection(conn);
+      PgqlPreparedStatement ps = pgqlConn.prepareStatement(strQuery);
+      ps.execute();
+      PgqlResultSet rs = ps.getResultSet();
+      result = "Query result is retrieved.";
+      pg = getResultPG(rs, cntNode, cntEdge);
+    } catch (PgqlException e) {
+      result = printException(e);
+    }
+    long timeEnd = System.nanoTime();
+    System.out.println("INFO: Execution time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms (" + result + ")");
+    ctx.result(result);
+    ctx.contentType("application/json");
+    HashMap<String, Object> response = new HashMap<>();
+    response.put("request", ctx.fullUrl());
+    response.put("pg", pg);
+    ctx.json(response);
+  };
+
   public static Handler nodeMatch = ctx -> {
 
     String strGraph = ctx.queryParam("graph", strGraphPreset);

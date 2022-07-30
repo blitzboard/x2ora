@@ -22,7 +22,7 @@ public class Main {
 	public static String strGraphPreset;
 
 	public static void main(String[] args) throws Exception {
-		
+
 		Javalin app = Javalin.create(config -> {
 			config.enableCorsForAllOrigins();
 			config.server(() -> {
@@ -65,7 +65,8 @@ public class Main {
 		app.post("/merge_graph/", UpdateController.mergeGraph);
 		app.get("/node_match/", RetrievalController.nodeMatch);
 		app.get("/edge_match/", RetrievalController.edgeMatch);
-		app.get("/query/", RetrievalController.shortest);
+		app.get("/shortest/", RetrievalController.shortest);
+		app.get("/query/", RetrievalController.query);
 	}
 	
 	private static SslContextFactory getSslContextFactory() {
