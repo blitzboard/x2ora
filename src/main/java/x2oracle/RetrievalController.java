@@ -1,9 +1,6 @@
 package x2oracle;
 
 import io.javalin.http.Handler;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.HashMap;
 import static x2oracle.Main.*;
 
@@ -15,7 +12,6 @@ import oracle.pgql.lang.PgqlException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-
 public class RetrievalController {
 
   public static String countNodes() throws Exception {
@@ -23,7 +19,7 @@ public class RetrievalController {
     String result = "";
     try {
       PgqlConnection pgqlConn = PgqlConnection.getConnection(conn);
-      PgqlPreparedStatement ps = pgqlConn.prepareStatement("SELECT COUNT(v) FROM MATCH (v) ON " + strGraphPreset);
+      PgqlPreparedStatement ps = pgqlConn.prepareStatement("SELECT COUNT(v) FROM MATCH (v) ON " + strPgview);
       PgqlResultSet rs = ps.executeQuery();
       if (rs.first()){
         result = "Test query succeeded.";
@@ -38,7 +34,7 @@ public class RetrievalController {
 
   public static Handler query = ctx -> {
 
-    String strGraph = ctx.queryParam("graph", strGraphPreset);
+    String strGraph = ctx.queryParam("graph");
     String strQuery = ctx.queryParam("query", "");
     
     strQuery = strQuery + "ON " + strGraph;
@@ -90,7 +86,7 @@ public class RetrievalController {
     ctx.json(response);
   };
 
-	private static PgGraph getResultPG(PgqlResultSet rs, int countNode, int countEdge) {
+	private static PgGraph getResultPG(PgqlResultSet rs, int cntNode, int cntEdge) {
 		PgGraph pg = new PgGraph();
 		try {
 			while (rs.next()) {
@@ -98,8 +94,8 @@ public class RetrievalController {
 				int lengthNode = 3; // ID + Label + JSON Props
 				int lengthEdge = 4; // ID + Src Node ID + Dst Node ID + Label + JSON Props
 
-				int offsetEdge = countNode * lengthNode; // Edge Offset
-				int offsetNodeList = offsetEdge + (countEdge * lengthEdge); // Node List Offset
+				int offsetEdge = cntNode * lengthNode; // Edge Offset
+				int offsetNodeList = offsetEdge + (cntEdge * lengthEdge); // Node List Offset
         
 				// Nodes
 				for (int i = 1; i <= offsetEdge; i = i + lengthNode) {

@@ -19,7 +19,7 @@ public class Main {
 
 	public static Connection conn;
 	public static PgxSession pgxSession;
-	public static String strGraphPreset;
+	public static String strPgview;
 
 	public static void main(String[] args) throws Exception {
 
@@ -54,7 +54,7 @@ public class Main {
 		pds.setPassword(rb.getString("password"));
 		conn = pds.getConnection();
 		conn.setAutoCommit(false);
-		strGraphPreset = rb.getString("graph");
+		strPgview = rb.getString("pgview");
 
 		// Run a test query at startup
 		RetrievalController.countNodes();

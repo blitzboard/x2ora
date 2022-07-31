@@ -13,7 +13,7 @@ public class RetrievalControllerPgx {
     long timeStart = System.nanoTime();
     String result = "";
     try {
-      PgqlResultSet rs = pgxSession.queryPgql("SELECT COUNT(v) FROM MATCH (v) ON " + strGraphPreset);
+      PgqlResultSet rs = pgxSession.queryPgql("SELECT COUNT(v) FROM MATCH (v) ON " + strPgview);
       if (rs.first()){
         result = "Test query succeeded.";
       }
@@ -27,7 +27,7 @@ public class RetrievalControllerPgx {
 
   public static Handler nodeMatch = ctx -> {
 
-    String strGraph = ctx.queryParam("graph", strGraphPreset);
+    String strGraph = ctx.queryParam("graph");
     String strIds = ctx.queryParam("node_ids[]", "");
     String strLabels = ctx.queryParam("node_labels[]", "").toUpperCase();
     String strLimit = ctx.queryParam("limit", "1000");

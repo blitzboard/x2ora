@@ -17,7 +17,7 @@ public class UpdateController {
   public static Handler mergeNode = ctx -> {
     long timeStart = System.nanoTime();
 
-    String strGraph = ctx.formParam("graph", strGraphPreset);
+    String strGraph = ctx.formParam("graph");
     String strId = ctx.formParam("id");
     String strLabel = ctx.formParam("label");
     String strProps = ctx.formParam("props");
@@ -32,7 +32,7 @@ public class UpdateController {
   public static Handler mergeEdge = ctx -> {
     long timeStart = System.nanoTime();
 
-    String strGraph = ctx.formParam("graph", strGraphPreset);
+    String strGraph = ctx.formParam("graph");
     String strSrcId = ctx.formParam("src_id");
     String strDstId = ctx.formParam("dst_id");
     String strLabel = ctx.formParam("label");
@@ -48,16 +48,19 @@ public class UpdateController {
   public static Handler mergeGraph = ctx -> {
     long timeStart = System.nanoTime();
     
-    PgGraph pg = ctx.bodyAsClass(PgGraph.class);
+    PgGraphNamed pgn = ctx.bodyAsClass(PgGraphNamed.class);
+    String strGraph = pgn.getName();
+    PgGraph pg = pgn.getPg();
+
     System.out.println("INFO: Graph received (" + pg.countNodes() + " nodes, " + pg.countEdges() + " edges).");
 
     for (PgNode node : pg.getNodes()) {
-      String result = mergeNode(strGraphPreset, (String)node.getId(), node.getLabel(), node.getPropertiesJSON());
+      String result = mergeNode(strGraph, (String)node.getId(), node.getLabel(), node.getPropertiesJSON());
       System.out.println(result);
     }
 
     for (PgEdge edge : pg.getEdges()) {
-      String result = mergeEdge(strGraphPreset, (String)edge.getFrom(), (String)edge.getTo(), edge.getLabel(), edge.getPropertiesJSON());
+      String result = mergeEdge(strGraph, (String)edge.getFrom(), (String)edge.getTo(), edge.getLabel(), edge.getPropertiesJSON());
       System.out.println(result);
     }
     
@@ -76,9 +79,10 @@ public class UpdateController {
       // Check if the node exists
       if (able) {
         PgqlConnection pgqlConn = PgqlConnection.getConnection(conn);
-        PgqlPreparedStatement pps = pgqlConn.prepareStatement("SELECT v.id FROM MATCH (v) ON " + strGraph + " WHERE v.label = ? AND v.id = '" + strId + "'");
-        pps.setString(1, strLabel.toUpperCase());
-        pps.setString(2, strId);
+        PgqlPreparedStatement pps = pgqlConn.prepareStatement("SELECT v.id FROM MATCH (v) ON " + strPgview + " WHERE v.graph = ? AND v.label = ? AND v.id = ?");
+        pps.setString(1, strGraph.toUpperCase());
+        pps.setString(2, strLabel.toUpperCase());
+        pps.setString(3, strId);
         pps.execute();
         PgqlResultSet rs = pps.getResultSet();
         if (rs.first()){
@@ -131,9 +135,9 @@ public class UpdateController {
 
       // Check if the node exists
       if (able) {
-        //ps = conn.prepareStatement("SELECT v.id FROM MATCH (v) ON " + strGraph + " WHERE v.id = ?");
-        PgqlPreparedStatement pps = pgqlConn.prepareStatement("SELECT v.id FROM MATCH (v) ON " + strGraph + " WHERE v.id = ?");
-        pps.setString(1, strSrcId);
+        PgqlPreparedStatement pps = pgqlConn.prepareStatement("SELECT v.id FROM MATCH (v) ON " + strPgview + " WHERE v.graph = ? AND v.id = ?");
+        pps.setString(1, strGraph.toUpperCase());
+        pps.setString(2, strSrcId);
         pps.execute();
         PgqlResultSet rs = pps.getResultSet();
         if (!rs.first()){
@@ -144,9 +148,9 @@ public class UpdateController {
 
       // Check if the node exists
       if (able) {
-        //ps = conn.prepareStatement("SELECT v.id FROM MATCH (v) ON " + strGraph + " WHERE v.id = ?");
-        PgqlPreparedStatement pps = pgqlConn.prepareStatement("SELECT v.id FROM MATCH (v) ON " + strGraph + " WHERE v.id = ?");
-        pps.setString(1, strDstId);
+        PgqlPreparedStatement pps = pgqlConn.prepareStatement("SELECT v.id FROM MATCH (v) ON " + strPgview + " WHERE v.graph = ? AND v.id = ?");
+        pps.setString(1, strGraph.toUpperCase());
+        pps.setString(2, strDstId);
         pps.execute();
         PgqlResultSet rs = pps.getResultSet();
         if (!rs.first()){
@@ -157,11 +161,11 @@ public class UpdateController {
 
       // Check if the edge exists
       if (able) {
-        //ps = conn.prepareStatement("SELECT e.id FROM MATCH (src)-[e]->(dst) ON " + strGraph + " WHERE e.label = ? AND src.id = ? AND dst.id = ?");
-        PgqlPreparedStatement pps = pgqlConn.prepareStatement("SELECT e.id FROM MATCH (src)-[e]->(dst) ON " + strGraph + " WHERE e.label = ? AND src.id = ? AND dst.id = ?");
-        pps.setString(1, strLabel.toUpperCase());
-        pps.setString(2, strSrcId);
-        pps.setString(3, strDstId);
+        PgqlPreparedStatement pps = pgqlConn.prepareStatement("SELECT e.id FROM MATCH (src)-[e]->(dst) ON " + strPgview + " WHERE e.graph = ? AND e.label = ? AND src.id = ? AND dst.id = ?");
+        pps.setString(1, strGraph.toUpperCase());
+        pps.setString(2, strLabel.toUpperCase());
+        pps.setString(3, strSrcId);
+        pps.setString(4, strDstId);
         pps.execute();
         PgqlResultSet rs = pps.getResultSet();
         if (rs.first()){
