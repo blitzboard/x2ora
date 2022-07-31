@@ -59,7 +59,7 @@ public class RetrievalController {
     while (matcherEdge.find()) {
       System.out.println("\n\n\nEdge: " + matcherEdge.group(1) + "\n\n\n");
       String v = matcherEdge.group(1);
-      strSelect = strSelect + v + ".id AS " + v + "_id, " + v + ".label AS " + v + "_label, " + v + ".props AS " + v + "_props, ";
+      strSelect = strSelect + v + ".id AS " + v + "_id, " + v + ".src AS " + v + "_src, " + v + ".dst AS " + v + "_dst, " + v + ".label AS " + v + "_label, " + v + ".props AS " + v + "_props, ";
       cntEdge++;
     }
     strSelect = strSelect + "1 ";    
@@ -80,122 +80,6 @@ public class RetrievalController {
     } catch (PgqlException e) {
       result = printException(e);
     }
-    long timeEnd = System.nanoTime();
-    System.out.println("INFO: Execution time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms (" + result + ")");
-    ctx.result(result);
-    ctx.contentType("application/json");
-    HashMap<String, Object> response = new HashMap<>();
-    response.put("request", ctx.fullUrl());
-    response.put("pg", pg);
-    ctx.json(response);
-  };
-
-  public static Handler nodeMatch = ctx -> {
-
-    String strGraph = ctx.queryParam("graph", strGraphPreset);
-    String strIds = ctx.queryParam("node_ids[]", "");
-    String strLabels = ctx.queryParam("node_labels[]", "").toUpperCase();
-    String strLimit = ctx.queryParam("limit", "1000");
-    
-    String strWhere = " WHERE 1 = 1";
-    if (!strIds.isEmpty()) {
-      strWhere = strWhere + " AND v.id = '" + strIds + "'"; // Should be replaced to IN () in 21.3 
-    }
-    if (!strLabels.isEmpty()) {
-      strWhere = strWhere + " AND LABEL(v) = '" + strLabels + "'"; // Should be replaced to IN () in 21.3
-    }
-    String clauseLimit = " LIMIT " + strLimit;
-    String strQuery = "SELECT v.id, LABEL(v), v.props FROM MATCH (v) ON " + strGraph + strWhere + clauseLimit;    
-    System.out.println("INFO: A request is received: " + strQuery);
-
-    long timeStart = System.nanoTime();
-    String result = "";
-    PgGraph pg = new PgGraph();
-    try {
-      PgqlConnection pgqlConn = PgqlConnection.getConnection(conn);
-      PgqlPreparedStatement ps = pgqlConn.prepareStatement(strQuery);
-      ps.execute();
-      PgqlResultSet rs = ps.getResultSet();
-      result = "Nodes with ID [" + strIds + "] are retrieved.";
-      pg = getResultPG(rs, 1, 0);
-    } catch (PgqlException e) {
-      result = printException(e);
-    }
-    long timeEnd = System.nanoTime();
-    System.out.println("INFO: Execution time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms (" + result + ")");
-    ctx.result(result);
-    ctx.contentType("application/json");
-    HashMap<String, Object> response = new HashMap<>();
-    response.put("request", ctx.fullUrl());
-    response.put("pg", pg);
-    ctx.json(response);
-  };
-
-  public static Handler edgeMatch = ctx -> {
-
-    String strGraph = ctx.queryParam("graph", strGraphPreset);
-    String strLabels = ctx.queryParam("edge_labels[]", "").toUpperCase();
-    String strLimit = ctx.queryParam("limit", "1000");
-
-    String strWhere = " WHERE 1 = 1";
-    if (!strLabels.isEmpty()) {
-      strWhere = strWhere + " AND LABEL(e) = '" + strLabels + "'"; // Should be replaced to IN () in 21.3
-    }
-    String clauseLimit = " LIMIT " + strLimit;
-    String strQuery = "SELECT v1.id AS v1_id, LABEL(v1) AS v1_label, v1.props AS v1_props, v2.id AS v2_id, LABEL(v2) AS v2_label, v2.props AS v2_props, ID(e), v1.id AS src, v2.id AS dst, LABEL(e), e.props FROM MATCH (v1)-[e]->(v2) ON " + strGraph + strWhere + clauseLimit;
-    System.out.println("INFO: A request is received: " + strQuery);
-
-    long timeStart = System.nanoTime();
-    String result = "";
-    PgGraph pg = new PgGraph();
-    try {
-      PgqlConnection pgqlConn = PgqlConnection.getConnection(conn);
-      PgqlPreparedStatement ps = pgqlConn.prepareStatement(strQuery);
-      ps.execute();
-      PgqlResultSet rs = ps.getResultSet();
-      result = "Edge(s) with Label = " + strLabels + " are retrieved.";
-      pg = getResultPG(rs, 2, 1);
-    } catch (PgqlException e) {
-      result = printException(e);
-    }
-    long timeEnd = System.nanoTime();
-    System.out.println("INFO: Execution time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms (" + result + ")");
-    ctx.result(result);
-    ctx.contentType("application/json");
-    HashMap<String, Object> response = new HashMap<>();
-    response.put("request", ctx.fullUrl());
-    response.put("pg", pg);
-    ctx.json(response);
-  };
-
-  public static Handler shortest = ctx -> {
-
-    String strGraph = ctx.queryParam("graph", strGraphPreset);
-    String strFromNodeId = ctx.queryParam("from_node_id", "");
-    String strToNodeId = ctx.queryParam("to_node_id", "");
-    String strTopK = ctx.queryParam("top_k", "1");
-    String strLimit = ctx.queryParam("limit", "1000");
-
-    String strWhere = " WHERE ID(v1) = '" + strFromNodeId + "' AND ID(v2) = '" + strToNodeId + "'";
-    String clauseLimit = " LIMIT " + strLimit;
-    String strQuery = "SELECT ARRAY_AGG(ID(e)) AS edges FROM MATCH TOP " + strTopK + " SHORTEST ((v1) (-[e]->(v))* (v2)) ON " + strGraph + strWhere + clauseLimit;
-    System.out.println("INFO: A request is received: " + strQuery);
-
-    long timeStart = System.nanoTime();
-    String result = "";
-    PgGraph pg = new PgGraph();
-    try {
-      PreparedStatement ps = conn.prepareStatement(strQuery);
-      ps.execute();
-      ResultSet rs = ps.getResultSet();
-      result = "Edge(s) are retrieved.";
-      while (rs.next()) {
-        System.out.println(rs.getString(1));
-      }
-    } catch (SQLException e) {
-      result = printException(e);
-    }
-
     long timeEnd = System.nanoTime();
     System.out.println("INFO: Execution time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms (" + result + ")");
     ctx.result(result);
