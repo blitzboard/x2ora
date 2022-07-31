@@ -37,7 +37,7 @@ public class RetrievalController {
     String strGraph = ctx.queryParam("graph");
     String strQuery = ctx.queryParam("query", "");
     
-    strQuery = strQuery + "ON " + strGraph;
+    strQuery = strQuery + "ON " + strPgview;
     System.out.println("INFO: A request is received: " + strQuery);
 
     // Count numbers of nodes and edges
