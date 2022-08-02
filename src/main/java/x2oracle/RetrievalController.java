@@ -34,20 +34,22 @@ public class RetrievalController {
 
   public static Handler query = ctx -> {
 
-    String strGraph = ctx.queryParam("graph");
+    String strGraph = ctx.queryParam("graph").toUpperCase();
     String strQuery = ctx.queryParam("query", "");
     
-    strQuery = strQuery + "ON " + strPgview;
+    strQuery = strQuery + " ON " + strPgview;
     System.out.println("INFO: A request is received: " + strQuery);
 
     // Count numbers of nodes and edges
-    String strSelect = "SELECT ";
+    String strSelect = "\nSELECT ";
+    String strWhere = "\nWHERE ";
     int cntNode = 0; 
     Matcher matcherNode = Pattern.compile("\\((\\w+)\\)").matcher(strQuery);
     while (matcherNode.find()) {
       System.out.println("\n\n\nNode: " + matcherNode.group(1) + "\n\n\n");
       String v = matcherNode.group(1);
       strSelect = strSelect + v + ".id AS " + v + "_id, " + v + ".label AS " + v + "_label, " + v + ".props AS " + v + "_props, ";
+      strWhere = strWhere + v + ".graph = '" + strGraph + "' AND ";
       cntNode++;
     }
     int cntEdge = 0; 
@@ -56,11 +58,13 @@ public class RetrievalController {
       System.out.println("\n\n\nEdge: " + matcherEdge.group(1) + "\n\n\n");
       String v = matcherEdge.group(1);
       strSelect = strSelect + v + ".id AS " + v + "_id, " + v + ".src AS " + v + "_src, " + v + ".dst AS " + v + "_dst, " + v + ".label AS " + v + "_label, " + v + ".props AS " + v + "_props, ";
+      strWhere = strWhere + v + ".graph = '" + strGraph + "' AND ";
       cntEdge++;
     }
-    strSelect = strSelect + "1 ";    
+    strSelect = strSelect + "1 ";
+    strWhere = strWhere + " 1 = 1";
 
-    strQuery = strSelect + "FROM " + strQuery;
+    strQuery = strSelect + "FROM " + strQuery + strWhere;
     System.out.println("INFO: Query is modified: " + strQuery);
 
     long timeStart = System.nanoTime();
