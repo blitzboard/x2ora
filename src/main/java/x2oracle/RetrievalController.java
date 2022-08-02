@@ -1,7 +1,11 @@
 package x2oracle;
 
 import io.javalin.http.Handler;
+
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+
 import static x2oracle.Main.*;
 
 import oracle.pg.rdbms.pgql.PgqlConnection;
@@ -30,6 +34,25 @@ public class RetrievalController {
     long timeEnd = System.nanoTime();
     System.out.println("INFO: Execution Time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms (" + result + ")");
     return result;
+  };
+
+  public static Handler list = ctx -> {
+    long timeStart = System.nanoTime();
+    String result = "";
+    List<String> response = new ArrayList<String>();
+    try {
+      PgqlConnection pgqlConn = PgqlConnection.getConnection(conn);
+      PgqlPreparedStatement ps = pgqlConn.prepareStatement("SELECT DISTINCT v.graph FROM MATCH (v) ON " + strPgview);
+      PgqlResultSet rs = ps.executeQuery();
+      while (rs.next()) {
+        response.add(rs.getString("graph"));
+      }
+    } catch (PgqlException e) {
+      result = printException(e);
+    }
+    long timeEnd = System.nanoTime();
+    System.out.println("INFO: Execution Time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms (" + result + ")");
+    ctx.json(response);
   };
 
   public static Handler query = ctx -> {
@@ -64,7 +87,7 @@ public class RetrievalController {
     strSelect = strSelect + "1 ";
     strWhere = strWhere + " 1 = 1";
 
-    strQuery = strSelect + "FROM " + strQuery + strWhere;
+    strQuery = strSelect + "\nFROM " + strQuery + strWhere;
     System.out.println("INFO: Query is modified: " + strQuery);
 
     long timeStart = System.nanoTime();

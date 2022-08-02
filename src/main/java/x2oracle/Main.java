@@ -64,6 +64,7 @@ public class Main {
 		app.post("/merge_edge/", UpdateController.mergeEdge);
 		app.post("/merge_graph/", UpdateController.mergeGraph);
 		app.get("/query/", RetrievalController.query);
+		app.get("/list/", RetrievalController.list);
 	}
 	
 	private static SslContextFactory getSslContextFactory() {
