@@ -71,6 +71,39 @@ public class UpdateController {
     ctx.result(result + "\n");
   };
 
+  public static Handler drop = ctx -> {
+    long timeStart = System.nanoTime();
+    String strGraph = ctx.formParam("graph");
+    String query = "";
+
+    query = "DELETE FROM x2pgv_edge WHERE graph = ?";
+    try (PreparedStatement ps = conn.prepareStatement(query)) {
+      System.out.println("\n\n\n\n\n\n\n\n----------------------------------------------");
+      ps.setString(1, strGraph.toUpperCase());
+      ps.execute();
+    } catch (Exception e) {
+      conn.rollback();
+      System.out.println("rollback");
+      throw e;
+    };
+
+    query = "DELETE FROM x2pgv_node WHERE graph = ?";
+    try (PreparedStatement ps = conn.prepareStatement(query)) {
+      ps.setString(1, strGraph.toUpperCase());
+      ps.execute();
+    } catch (Exception e) {
+      conn.rollback();
+      System.out.println("rollback");
+      throw e;
+    };
+
+    conn.commit();
+    long timeEnd = System.nanoTime();
+    System.out.println("INFO: Execution Time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms");
+    ctx.result(strGraph + " is dropped.\n");
+  };
+
+
   private static String mergeNode(String strGraph, String strId, String strLabel, String strProps) throws SQLException {
     String result = "";
     try {

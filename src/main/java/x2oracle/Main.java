@@ -63,6 +63,7 @@ public class Main {
 		app.post("/merge_node/", UpdateController.mergeNode); 
 		app.post("/merge_edge/", UpdateController.mergeEdge);
 		app.post("/merge_graph/", UpdateController.mergeGraph);
+		app.post("/drop/", UpdateController.drop);
 		app.get("/query/", RetrievalController.query);
 		app.get("/list/", RetrievalController.list);
 	}
