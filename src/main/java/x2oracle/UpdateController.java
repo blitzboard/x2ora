@@ -75,15 +75,18 @@ public class UpdateController {
     long timeStart = System.nanoTime();
     String strGraph = ctx.formParam("graph");
     String query = "";
+    String result = "";
 
     query = "DELETE FROM x2pgv_edge WHERE graph = ?";
     try (PreparedStatement ps = conn.prepareStatement(query)) {
-      System.out.println("\n\n\n\n\n\n\n\n----------------------------------------------");
       ps.setString(1, strGraph.toUpperCase());
       ps.execute();
+      result = strGraph + " is dropped.\n";
+      ps.close();
     } catch (Exception e) {
       conn.rollback();
-      System.out.println("rollback");
+      System.out.println("INFO: rollback");
+      result = printException(e);
       throw e;
     };
 
@@ -91,16 +94,19 @@ public class UpdateController {
     try (PreparedStatement ps = conn.prepareStatement(query)) {
       ps.setString(1, strGraph.toUpperCase());
       ps.execute();
+      result = strGraph + " is dropped.\n";
+      ps.close();
     } catch (Exception e) {
       conn.rollback();
-      System.out.println("rollback");
+      System.out.println("INFO: rollback");
+      result = printException(e);
       throw e;
     };
 
     conn.commit();
     long timeEnd = System.nanoTime();
     System.out.println("INFO: Execution Time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms");
-    ctx.result(strGraph + " is dropped.\n");
+    ctx.result(result);
   };
 
 
@@ -122,6 +128,8 @@ public class UpdateController {
           able = false;
           result = "Node " + strLabel.toUpperCase() + " " + strId + " exists.";
         }
+        rs.close();
+        pps.close();
       }
 
       // Insert the node if not exists
@@ -134,6 +142,7 @@ public class UpdateController {
           ps.setString(4, strProps);
           ps.execute();
           result = "Node " + strLabel.toUpperCase() + " " + strId + " is added.";  
+          ps.close();
         } catch (Exception e) {
           conn.rollback();
           System.out.println("rollback");
@@ -190,6 +199,8 @@ public class UpdateController {
           able = false;
           result = "Node " + strDstId + " does not exist.";
         }
+        rs.close();
+        pps.close();
       }
 
       // Check if the edge exists
@@ -205,6 +216,8 @@ public class UpdateController {
           able = false;
           result = "Edge " + strLabel + " " + strSrcId + " -> " + strDstId + " exists.";
         }
+        rs.close();
+        pps.close();
       }
 
       // Insert the edge if not exists
@@ -219,6 +232,7 @@ public class UpdateController {
           ps.setString(6, strProps);
           ps.execute();
           result = "Edge " + strLabel + " " + strSrcId + " -> " + strDstId + " is added.";
+          ps.close();
         } catch (Exception e) {
           conn.rollback();
           System.out.println("rollback");

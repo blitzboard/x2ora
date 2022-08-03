@@ -28,6 +28,7 @@ public class RetrievalController {
       if (rs.first()){
         result = "Test query succeeded.";
       }
+      rs.close();
     } catch (PgqlException e) {
       result = printException(e);
     }
@@ -47,6 +48,8 @@ public class RetrievalController {
       while (rs.next()) {
         response.add(rs.getString("graph"));
       }
+      rs.close();
+      ps.close();
     } catch (PgqlException e) {
       result = printException(e);
     }
@@ -100,6 +103,8 @@ public class RetrievalController {
       PgqlResultSet rs = ps.getResultSet();
       result = "Query result is retrieved.";
       pg = getResultPG(rs, cntNode, cntEdge);
+      rs.close();
+      ps.close();
     } catch (PgqlException e) {
       result = printException(e);
     }
