@@ -79,8 +79,8 @@ public class UpdateController {
     try (PreparedStatement ps = conn.prepareStatement(query)) {
       ps.setString(1, strGraph.toUpperCase());
       ps.execute();
-      result = strGraph + " is dropped.\n";
       ps.close();
+      result = result + "All nodes in " + strGraph + " is deleted.\n";
     } catch (Exception e) {
       conn.rollback();
       System.out.println("INFO: rollback");
@@ -92,8 +92,8 @@ public class UpdateController {
     try (PreparedStatement ps = conn.prepareStatement(query)) {
       ps.setString(1, strGraph.toUpperCase());
       ps.execute();
-      result = strGraph + " is dropped.\n";
       ps.close();
+      result = result + "All edges in " + strGraph + " is deleted.\n";
     } catch (Exception e) {
       conn.rollback();
       System.out.println("INFO: rollback");
