@@ -18,7 +18,6 @@ import oracle.pg.rdbms.pgql.PgqlResultSet;
 import oracle.pg.rdbms.pgql.PgqlPreparedStatement;
 import oracle.pgql.lang.PgqlException;
 
-
 public class RetrievalController {
 
   public static String countNodes() throws Exception {

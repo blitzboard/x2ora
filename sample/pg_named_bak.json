@@ -5,6 +5,7 @@
       {
         "id": "Alice",
         "labels": [
+          "person"
         ],
         "properties": {
           "age": [
@@ -131,6 +132,7 @@
         "to": "David",
         "undirected": false,
         "labels": [
+          "knows"
         ],
         "properties": {
           "since": [

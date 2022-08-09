@@ -125,9 +125,12 @@ class PgNode {
     }
   }
 
-  public String getLabel() {
-    Iterator<String> iterator = labels.iterator();
-    String label = (String)iterator.next();
+  public String getLabel() { // Get the first label only
+    String label = "";
+    if (labels.size() > 0) {
+      Iterator<String> iterator = labels.iterator();
+      label = (String)iterator.next();
+    }
     return label;
   }
 
@@ -192,11 +195,7 @@ class PgEdge {
   public void addLabel(String label) {
     labels.add(label.toLowerCase());
   }
-  /*
-  public void addProperty(String key, String value) {
-    properties.put(key, value);
-  }
-  */
+
   public void addProperties(String json) {
     ObjectMapper mapper = new ObjectMapper();
     TypeReference<HashMap<String, List<Object>>> typeRef = new TypeReference<HashMap<String, List<Object>>>(){};
@@ -210,8 +209,11 @@ class PgEdge {
   }
 
   public String getLabel() {
-    Iterator<String> iterator = labels.iterator();
-    String label = (String)iterator.next();
+    String label = "";
+    if (labels.size() > 0) {
+      Iterator<String> iterator = labels.iterator();
+      label = (String)iterator.next();
+    }
     return label;
   }
 
