@@ -24,7 +24,7 @@ public class UpdateController {
     PgGraph pg = pgn.getPg();
 
     if (exists(strGraph)) {
-      result = strGraph.toUpperCase() + " exists.\n";
+      result = "Graph " + strGraph + " exists.\n";
     } else {
       System.out.println("INFO: Graph received (" + pg.countNodes() + " nodes, " + pg.countEdges() + " edges).");
       String query = "";
@@ -33,7 +33,7 @@ public class UpdateController {
       PreparedStatement ps = conn.prepareStatement(query);
       for (PgNode node : pg.getNodes()) {
         try {
-          ps.setString(1, strGraph.toUpperCase());
+          ps.setString(1, strGraph);
           ps.setString(2, (String)node.getId());
           ps.setString(3, node.getLabel());
           ps.setString(4, node.getPropertiesJSON());
@@ -51,7 +51,7 @@ public class UpdateController {
       ps = conn.prepareStatement(query);
       for (PgEdge edge : pg.getEdges()) {
         try {
-          ps.setString(1, strGraph.toUpperCase());
+          ps.setString(1, strGraph);
           ps.setString(2, UUID.randomUUID().toString());
           ps.setString(3, (String)edge.getFrom());
           ps.setString(4, (String)edge.getTo());
@@ -68,7 +68,7 @@ public class UpdateController {
       ps.close();
 
       conn.commit();
-      result = strGraph.toUpperCase() + " is created.\n";
+      result = strGraph + " is created.\n";
     }
     long timeEnd = System.nanoTime();
     System.out.println("INFO: Execution Time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms");
@@ -81,16 +81,16 @@ public class UpdateController {
     String result = "";
 
     if (!exists(strGraph)) {
-      result = strGraph.toUpperCase() + " does not exist.\n";
+      result = strGraph + " does not exist.\n";
     } else {
       String query = "";
 
       query = "DELETE FROM x2pgv_edge WHERE graph = ?";
       try (PreparedStatement ps = conn.prepareStatement(query)) {
-        ps.setString(1, strGraph.toUpperCase());
+        ps.setString(1, strGraph);
         ps.execute();
         ps.close();
-        result = result + "All nodes in " + strGraph.toUpperCase() + " is deleted.\n";
+        result = result + "All nodes in " + strGraph + " is deleted.\n";
       } catch (Exception e) {
         conn.rollback();
         System.out.println("INFO: rollback");
@@ -100,10 +100,10 @@ public class UpdateController {
 
       query = "DELETE FROM x2pgv_node WHERE graph = ?";
       try (PreparedStatement ps = conn.prepareStatement(query)) {
-        ps.setString(1, strGraph.toUpperCase());
+        ps.setString(1, strGraph);
         ps.execute();
         ps.close();
-        result = result + "All edges in " + strGraph.toUpperCase() + " is deleted.\n";
+        result = result + "All edges in " + strGraph + " is deleted.\n";
       } catch (Exception e) {
         conn.rollback();
         System.out.println("INFO: rollback");
@@ -203,7 +203,7 @@ public class UpdateController {
       if (able) {
         PgqlConnection pgqlConn = PgqlConnection.getConnection(conn);
         PgqlPreparedStatement pps = pgqlConn.prepareStatement("SELECT v.id FROM MATCH (v) ON " + strPgview + " WHERE v.graph = ? AND v.label = ? AND v.id = ?");
-        pps.setString(1, strGraph.toUpperCase());
+        pps.setString(1, strGraph);
         pps.setString(2, strLabel.toUpperCase());
         pps.setString(3, strId);
         pps.execute();
@@ -220,7 +220,7 @@ public class UpdateController {
       if (able) {
         String query = "INSERT INTO x2pgv_node VALUES (?, ?, ?, ?)";			
         try (PreparedStatement ps = conn.prepareStatement(query)) {
-          ps.setString(1, strGraph.toUpperCase());
+          ps.setString(1, strGraph);
           ps.setString(2, strId);
           ps.setString(3, strLabel.toUpperCase());
           ps.setString(4, strProps);
@@ -262,7 +262,7 @@ public class UpdateController {
       // Check if the node exists
       if (able) {
         PgqlPreparedStatement pps = pgqlConn.prepareStatement("SELECT v.id FROM MATCH (v) ON " + strPgview + " WHERE v.graph = ? AND v.id = ?");
-        pps.setString(1, strGraph.toUpperCase());
+        pps.setString(1, strGraph);
         pps.setString(2, strSrcId);
         pps.execute();
         PgqlResultSet rs = pps.getResultSet();
@@ -275,7 +275,7 @@ public class UpdateController {
       // Check if the node exists
       if (able) {
         PgqlPreparedStatement pps = pgqlConn.prepareStatement("SELECT v.id FROM MATCH (v) ON " + strPgview + " WHERE v.graph = ? AND v.id = ?");
-        pps.setString(1, strGraph.toUpperCase());
+        pps.setString(1, strGraph);
         pps.setString(2, strDstId);
         pps.execute();
         PgqlResultSet rs = pps.getResultSet();
@@ -290,7 +290,7 @@ public class UpdateController {
       // Check if the edge exists
       if (able) {
         PgqlPreparedStatement pps = pgqlConn.prepareStatement("SELECT e.id FROM MATCH (src)-[e]->(dst) ON " + strPgview + " WHERE e.graph = ? AND e.label = ? AND src.id = ? AND dst.id = ?");
-        pps.setString(1, strGraph.toUpperCase());
+        pps.setString(1, strGraph);
         pps.setString(2, strLabel.toUpperCase());
         pps.setString(3, strSrcId);
         pps.setString(4, strDstId);
@@ -308,7 +308,7 @@ public class UpdateController {
       if (able) {
         String query = "INSERT INTO x2pgv_edge VALUES (?, ?, ?, ?, ?, ?)";			
         try (PreparedStatement ps = conn.prepareStatement(query)) {
-          ps.setString(1, strGraph.toUpperCase());
+          ps.setString(1, strGraph);
           ps.setString(2, UUID.randomUUID().toString());
           ps.setString(3, strSrcId);
           ps.setString(4, strDstId);

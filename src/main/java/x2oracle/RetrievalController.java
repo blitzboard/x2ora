@@ -63,7 +63,7 @@ public class RetrievalController {
   public static Handler query = ctx -> {
     long timeStart = System.nanoTime();
 
-    String strGraph = ctx.queryParam("graph").toUpperCase();
+    String strGraph = ctx.queryParam("graph");
     String strMatch = ctx.queryParam("query");
     System.out.println("INFO: A request is received: " + strMatch);
 
