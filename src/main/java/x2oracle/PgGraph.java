@@ -126,7 +126,7 @@ class PgNode {
   }
 
   public String getLabel() {
-    Iterator iterator = labels.iterator();
+    Iterator<String> iterator = labels.iterator();
     String label = (String)iterator.next();
     return label;
   }
@@ -210,7 +210,7 @@ class PgEdge {
   }
 
   public String getLabel() {
-    Iterator iterator = labels.iterator();
+    Iterator<String> iterator = labels.iterator();
     String label = (String)iterator.next();
     return label;
   }

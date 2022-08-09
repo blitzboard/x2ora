@@ -1,23 +1,23 @@
 package x2oracle;
 
+import static x2oracle.Main.*;
+
 import io.javalin.http.Handler;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 
-import static x2oracle.Main.*;
-
-import oracle.pg.rdbms.pgql.PgqlConnection;
 import oracle.pg.rdbms.pgql.PgqlResultSet;
 import oracle.pg.rdbms.pgql.PgqlPreparedStatement;
 import oracle.pgql.lang.PgqlException;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class RetrievalController {
 
@@ -25,7 +25,6 @@ public class RetrievalController {
     long timeStart = System.nanoTime();
     String result = "";
     try {
-      //PgqlConnection pgqlConn = PgqlConnection.getConnection(conn);
       PgqlPreparedStatement ps = pgqlConn.prepareStatement("SELECT COUNT(v) FROM MATCH (v) ON " + strPgview);
       PgqlResultSet rs = ps.executeQuery();
       if (rs.first()){
@@ -63,18 +62,17 @@ public class RetrievalController {
   };
 
   public static Handler query = ctx -> {
+    long timeStart = System.nanoTime();
 
     String strGraph = ctx.queryParam("graph").toUpperCase();
-    String strQuery = ctx.queryParam("query");
-    
-    strQuery = strQuery + " ON " + strPgview;
-    System.out.println("INFO: A request is received: " + strQuery);
+    String strMatch = ctx.queryParam("query");
+    System.out.println("INFO: A request is received: " + strMatch);
 
-    // Count numbers of nodes and edges
+    // SELECT and WHERE
     String strSelect = "\nSELECT ";
     String strWhere = "\nWHERE ";
     int cntNode = 0; 
-    Matcher matcherNode = Pattern.compile("\\((\\w+)\\)").matcher(strQuery);
+    Matcher matcherNode = Pattern.compile("\\((\\w+)\\)").matcher(strMatch);
     while (matcherNode.find()) {
       System.out.println("\n\n\nNode: " + matcherNode.group(1) + "\n\n\n");
       String v = matcherNode.group(1);
@@ -83,7 +81,7 @@ public class RetrievalController {
       cntNode++;
     }
     int cntEdge = 0; 
-    Matcher matcherEdge = Pattern.compile("\\[(\\w+)\\]").matcher(strQuery);
+    Matcher matcherEdge = Pattern.compile("\\[(\\w+)\\]").matcher(strMatch);
     while (matcherEdge.find()) {
       System.out.println("\n\n\nEdge: " + matcherEdge.group(1) + "\n\n\n");
       String v = matcherEdge.group(1);
@@ -94,15 +92,15 @@ public class RetrievalController {
     strSelect = strSelect + "1 ";
     strWhere = strWhere + " 1 = 1";
 
-    strQuery = strSelect + "\nFROM " + strQuery + strWhere;
-    System.out.println("INFO: Query is modified: " + strQuery);
+    // Complete PGQL query
+    strMatch = strSelect + "\nFROM " + strMatch + " ON " + strPgview + strWhere;
+    System.out.println("INFO: Query is modified:" + strMatch);
 
-    long timeStart = System.nanoTime();
+    // Run the PGQL query and get the result in PG-JSON
     String result = "";
     PgGraph pg = new PgGraph();
     try {
-      //PgqlConnection pgqlConn = PgqlConnection.getConnection(conn);
-      PgqlPreparedStatement ps = pgqlConn.prepareStatement(strQuery);
+      PgqlPreparedStatement ps = pgqlConn.prepareStatement(strMatch);
       ps.execute();
       PgqlResultSet rs = ps.getResultSet();
       result = "Query result is retrieved.";

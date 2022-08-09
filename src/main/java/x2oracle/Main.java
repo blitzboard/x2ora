@@ -73,7 +73,7 @@ public class Main {
 	}
 	
 	private static SslContextFactory getSslContextFactory() {
-		SslContextFactory sslContextFactory = new SslContextFactory();
+		SslContextFactory sslContextFactory = new SslContextFactory.Server();
 		sslContextFactory.setKeyStorePath(System.getProperty("user.dir") + "/src/main/resources/keystore.jks");
 		sslContextFactory.setKeyStorePassword("welcome1");
 		return sslContextFactory;
