@@ -13,11 +13,13 @@ import org.eclipse.jetty.util.ssl.SslContextFactory;
 import oracle.ucp.jdbc.PoolDataSourceFactory;
 import oracle.ucp.jdbc.PoolDataSource;
 import oracle.pg.rdbms.GraphServer;
+import oracle.pg.rdbms.pgql.PgqlConnection;
 import oracle.pgx.api.*;
 
 public class Main {
 
 	public static Connection conn;
+	public static PgqlConnection pgqlConn;
 	public static PgxSession pgxSession;
 	public static String strPgview;
 
@@ -54,6 +56,7 @@ public class Main {
 		pds.setPassword(rb.getString("password"));
 		conn = pds.getConnection();
 		conn.setAutoCommit(false);
+		pgqlConn = PgqlConnection.getConnection(conn);
 		strPgview = rb.getString("pgview");
 
 		// Run a test query at startup

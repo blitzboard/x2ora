@@ -25,7 +25,7 @@ public class RetrievalController {
     long timeStart = System.nanoTime();
     String result = "";
     try {
-      PgqlConnection pgqlConn = PgqlConnection.getConnection(conn);
+      //PgqlConnection pgqlConn = PgqlConnection.getConnection(conn);
       PgqlPreparedStatement ps = pgqlConn.prepareStatement("SELECT COUNT(v) FROM MATCH (v) ON " + strPgview);
       PgqlResultSet rs = ps.executeQuery();
       if (rs.first()){
@@ -101,7 +101,7 @@ public class RetrievalController {
     String result = "";
     PgGraph pg = new PgGraph();
     try {
-      PgqlConnection pgqlConn = PgqlConnection.getConnection(conn);
+      //PgqlConnection pgqlConn = PgqlConnection.getConnection(conn);
       PgqlPreparedStatement ps = pgqlConn.prepareStatement(strQuery);
       ps.execute();
       PgqlResultSet rs = ps.getResultSet();
