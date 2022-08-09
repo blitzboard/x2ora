@@ -14,6 +14,99 @@ import java.util.UUID;
 
 public class UpdateController {
 
+  public static Handler create = ctx -> {
+    long timeStart = System.nanoTime();
+    String query = "";
+    String result = "";
+
+    PgGraphNamed pgn = ctx.bodyAsClass(PgGraphNamed.class);
+    String strGraph = pgn.getName();
+    PgGraph pg = pgn.getPg();
+
+    System.out.println("INFO: Graph received (" + pg.countNodes() + " nodes, " + pg.countEdges() + " edges).");
+
+    query = "INSERT INTO x2pgv_node VALUES (?, ?, ?, ?)";
+    PreparedStatement ps = conn.prepareStatement(query);
+    for (PgNode node : pg.getNodes()) {
+      try {
+        ps.setString(1, strGraph.toUpperCase());
+        ps.setString(2, (String)node.getId());
+        ps.setString(3, node.getLabel());
+        ps.setString(4, node.getPropertiesJSON());
+        ps.execute();
+      } catch (Exception e) {
+        conn.rollback();
+        System.out.println("rollback");
+        result = printException(e);
+        throw e;
+      };
+    }
+    ps.close();
+
+    query = "INSERT INTO x2pgv_edge VALUES (?, ?, ?, ?, ?, ?)";
+    ps = conn.prepareStatement(query);
+    for (PgEdge edge : pg.getEdges()) {
+      try {
+        ps.setString(1, strGraph.toUpperCase());
+        ps.setString(2, UUID.randomUUID().toString());
+        ps.setString(3, (String)edge.getFrom());
+        ps.setString(4, (String)edge.getTo());
+        ps.setString(5, edge.getLabel());
+        ps.setString(6, edge.getPropertiesJSON());
+        ps.execute();
+      } catch (Exception e) {
+        conn.rollback();
+        System.out.println("rollback");
+        result = result + printException(e);
+        throw e;
+      };
+    }
+    ps.close();
+
+    conn.commit();
+    long timeEnd = System.nanoTime();
+    System.out.println("INFO: Execution Time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms");
+    ctx.result(strGraph + " is created.\n");
+  };
+
+  public static Handler drop = ctx -> {
+    long timeStart = System.nanoTime();
+    String strGraph = ctx.formParam("graph");
+    String query = "";
+    String result = "";
+
+    query = "DELETE FROM x2pgv_edge WHERE graph = ?";
+    try (PreparedStatement ps = conn.prepareStatement(query)) {
+      ps.setString(1, strGraph.toUpperCase());
+      ps.execute();
+      result = strGraph + " is dropped.\n";
+      ps.close();
+    } catch (Exception e) {
+      conn.rollback();
+      System.out.println("INFO: rollback");
+      result = printException(e);
+      throw e;
+    };
+
+    query = "DELETE FROM x2pgv_node WHERE graph = ?";
+    try (PreparedStatement ps = conn.prepareStatement(query)) {
+      ps.setString(1, strGraph.toUpperCase());
+      ps.execute();
+      result = strGraph + " is dropped.\n";
+      ps.close();
+    } catch (Exception e) {
+      conn.rollback();
+      System.out.println("INFO: rollback");
+      result = printException(e);
+      throw e;
+    };
+
+    conn.commit();
+    long timeEnd = System.nanoTime();
+    System.out.println("INFO: Execution Time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms");
+    ctx.result(result);
+  };
+
   public static Handler mergeNode = ctx -> {
     long timeStart = System.nanoTime();
 
@@ -70,99 +163,6 @@ public class UpdateController {
     System.out.println("INFO: Execution Time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms (" + result + ")");
     ctx.result(result + "\n");
   };
-
-  public static Handler create = ctx -> {
-    long timeStart = System.nanoTime();
-    String result = "";
-
-    PgGraphNamed pgn = ctx.bodyAsClass(PgGraphNamed.class);
-    String strGraph = pgn.getName();
-    PgGraph pg = pgn.getPg();
-
-    System.out.println("INFO: Graph received (" + pg.countNodes() + " nodes, " + pg.countEdges() + " edges).");
-
-    for (PgNode node : pg.getNodes()) {
-      String query = "INSERT INTO x2pgv_node VALUES (?, ?, ?, ?)";			
-      try (PreparedStatement ps = conn.prepareStatement(query)) {
-        ps.setString(1, strGraph.toUpperCase());
-        ps.setString(2, (String)node.getId());
-        ps.setString(3, node.getLabel());
-        ps.setString(4, node.getPropertiesJSON());
-        ps.execute();
-        //result = "Node " + node.getLabel() + " " + (String)node.getId() + " is added.";  
-        ps.close();
-      } catch (Exception e) {
-        conn.rollback();
-        System.out.println("rollback");
-        result = result + printException(e);
-        throw e;
-      };
-    }
-
-    for (PgEdge edge : pg.getEdges()) {
-      String query = "INSERT INTO x2pgv_edge VALUES (?, ?, ?, ?, ?, ?)";
-      try (PreparedStatement ps = conn.prepareStatement(query)) {
-        ps.setString(1, strGraph.toUpperCase());
-        ps.setString(2, UUID.randomUUID().toString());
-        ps.setString(3, (String)edge.getFrom());
-        ps.setString(4, (String)edge.getTo());
-        ps.setString(5, edge.getLabel());
-        ps.setString(6, edge.getPropertiesJSON());
-        ps.execute();
-        //result = "Edge " + edge.getLabel() + " " + (String)edge.getFrom() + " -> " + (String)edge.getTo() + " is added.";
-        ps.close();
-      } catch (Exception e) {
-        conn.rollback();
-        System.out.println("rollback");
-        result = result + printException(e);
-        throw e;
-      };
-    }
-
-    conn.commit();
-    long timeEnd = System.nanoTime();
-    System.out.println("INFO: Execution Time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms");
-    ctx.result(strGraph + " is created.\n");
-  };
-
-  public static Handler drop = ctx -> {
-    long timeStart = System.nanoTime();
-    String strGraph = ctx.formParam("graph");
-    String query = "";
-    String result = "";
-
-    query = "DELETE FROM x2pgv_edge WHERE graph = ?";
-    try (PreparedStatement ps = conn.prepareStatement(query)) {
-      ps.setString(1, strGraph.toUpperCase());
-      ps.execute();
-      result = strGraph + " is dropped.\n";
-      ps.close();
-    } catch (Exception e) {
-      conn.rollback();
-      System.out.println("INFO: rollback");
-      result = printException(e);
-      throw e;
-    };
-
-    query = "DELETE FROM x2pgv_node WHERE graph = ?";
-    try (PreparedStatement ps = conn.prepareStatement(query)) {
-      ps.setString(1, strGraph.toUpperCase());
-      ps.execute();
-      result = strGraph + " is dropped.\n";
-      ps.close();
-    } catch (Exception e) {
-      conn.rollback();
-      System.out.println("INFO: rollback");
-      result = printException(e);
-      throw e;
-    };
-
-    conn.commit();
-    long timeEnd = System.nanoTime();
-    System.out.println("INFO: Execution Time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms");
-    ctx.result(result);
-  };
-
 
   private static String mergeNode(String strGraph, String strId, String strLabel, String strProps) throws SQLException {
     String result = "";

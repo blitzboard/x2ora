@@ -29,6 +29,7 @@ public class RetrievalController {
         result = "Test query succeeded.";
       }
       rs.close();
+      ps.close();
     } catch (PgqlException e) {
       result = printException(e);
     }
