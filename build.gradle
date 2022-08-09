@@ -32,9 +32,9 @@ dependencies {
     testImplementation 'junit:junit:4.12'
 
     // Javalin
-    compile 'io.javalin:javalin:3.7.0'
+    implementation 'io.javalin:javalin:4.6.4'
     
     // Oracle Graph Client
-    compile fileTree(dir: './oracle-graph-client-22.2.0/lib/', include: '*.jar', exclude: 'ons-19.12.0.0.jar')
-    // compile fileTree(dir: '/opt/oracle/graph/client/lib/', include: '*.jar', exclude: 'ons-19.12.12.0.0.jar')
+    implementation fileTree(dir: './oracle-graph-client-22.2.0/lib/', include: '*.jar', exclude: 'ons-19.12.0.0.jar')
+    // implementation fileTree(dir: '/opt/oracle/graph/client/lib/', include: '*.jar', exclude: 'ons-19.12.12.0.0.jar')
 }

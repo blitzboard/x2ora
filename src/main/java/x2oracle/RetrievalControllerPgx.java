@@ -28,9 +28,9 @@ public class RetrievalControllerPgx {
   public static Handler nodeMatch = ctx -> {
 
     String strGraph = ctx.queryParam("graph");
-    String strIds = ctx.queryParam("node_ids[]", "");
-    String strLabels = ctx.queryParam("node_labels[]", "").toUpperCase();
-    String strLimit = ctx.queryParam("limit", "1000");
+    String strIds = ctx.queryParam("node_ids[]");
+    String strLabels = ctx.queryParam("node_labels[]").toUpperCase();
+    String strLimit = ctx.queryParam("limit");
     
     String strWhere = " WHERE 1 = 1";
     if (!strIds.isEmpty()) {

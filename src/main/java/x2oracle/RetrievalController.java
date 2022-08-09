@@ -65,7 +65,7 @@ public class RetrievalController {
   public static Handler query = ctx -> {
 
     String strGraph = ctx.queryParam("graph").toUpperCase();
-    String strQuery = ctx.queryParam("query", "");
+    String strQuery = ctx.queryParam("query");
     
     strQuery = strQuery + " ON " + strPgview;
     System.out.println("INFO: A request is received: " + strQuery);
