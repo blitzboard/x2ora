@@ -81,7 +81,7 @@ public class UpdateController {
     String result = "";
 
     if (!exists(strGraph)) {
-      result = strGraph + " does not exist.\n";
+      result = strGraph.toUpperCase() + " does not exist.\n";
     } else {
       String query = "";
 

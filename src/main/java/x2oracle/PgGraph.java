@@ -106,7 +106,9 @@ class PgNode {
   }
 
   public void addLabel(String label) {
-    this.labels.add(label.toLowerCase());
+    if (label != null) {
+      this.labels.add(label.toLowerCase());
+    }
   }
   /*
   public void addProperty(String key, Object value) {
@@ -193,7 +195,9 @@ class PgEdge {
   }
 
   public void addLabel(String label) {
-    labels.add(label.toLowerCase());
+    if (label != null) {
+      labels.add(label.toLowerCase());
+    }
   }
 
   public void addProperties(String json) {
