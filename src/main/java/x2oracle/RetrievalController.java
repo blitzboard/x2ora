@@ -2,6 +2,9 @@ package x2oracle;
 
 import io.javalin.http.Handler;
 
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -43,15 +46,15 @@ public class RetrievalController {
     String result = "";
     List<String> response = new ArrayList<String>();
     try {
-      PgqlConnection pgqlConn = PgqlConnection.getConnection(conn);
-      PgqlPreparedStatement ps = pgqlConn.prepareStatement("SELECT DISTINCT v.graph FROM MATCH (v) ON " + strPgview);
-      PgqlResultSet rs = ps.executeQuery();
+      String query = "SELECT DISTINCT graph FROM x2pgv_node";
+      PreparedStatement ps = conn.prepareStatement(query);
+      ResultSet rs = ps.executeQuery();
       while (rs.next()) {
         response.add(rs.getString("graph"));
       }
       rs.close();
       ps.close();
-    } catch (PgqlException e) {
+    } catch (SQLException e) {
       result = printException(e);
     }
     long timeEnd = System.nanoTime();
