@@ -60,9 +60,9 @@ public class Main {
 		RetrievalController.countNodes();
 
 		System.out.println("INFO: Ready to accept requests");
-		app.post("/merge_node/", UpdateController.mergeNode); 
-		app.post("/merge_edge/", UpdateController.mergeEdge);
-		app.post("/merge_graph/", UpdateController.mergeGraph);
+		//app.post("/merge_node/", UpdateController.mergeNode); 
+		//app.post("/merge_edge/", UpdateController.mergeEdge);
+		//app.post("/merge_graph/", UpdateController.mergeGraph);
 		app.post("/create/", UpdateController.create);
 		app.post("/drop/", UpdateController.drop);
 		app.get("/query/", RetrievalController.query);
