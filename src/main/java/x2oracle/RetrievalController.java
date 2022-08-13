@@ -24,7 +24,7 @@ public class RetrievalController {
     long timeStart = System.nanoTime();
     String result = "";
     try {
-      PgqlPreparedStatement ps = pgqlConn.prepareStatement("SELECT COUNT(v) FROM MATCH (v) ON " + strPgview);
+      PgqlPreparedStatement ps = pgqlConn.prepareStatement("SELECT COUNT(v) FROM MATCH (v) ON " + strPgv);
       PgqlResultSet rs = ps.executeQuery();
       if (rs.first()){
         result = "Test query succeeded.";
@@ -44,7 +44,7 @@ public class RetrievalController {
     String result = "";
     List<String> response = new ArrayList<String>();
     try {
-      String query = "SELECT DISTINCT graph FROM x2pgv_node";
+      String query = "SELECT DISTINCT graph FROM " + strPgvNode;
       PreparedStatement ps = conn.prepareStatement(query);
       ResultSet rs = ps.executeQuery();
       while (rs.next()) {
@@ -92,7 +92,7 @@ public class RetrievalController {
     strWhere = strWhere + " 1 = 1";
 
     // Complete PGQL query
-    strMatch = strSelect + "\nFROM " + strMatch + " ON " + strPgview + strWhere;
+    strMatch = strSelect + "\nFROM " + strMatch + " ON " + strPgv + strWhere;
     System.out.println("INFO: Query is modified:" + strMatch);
 
     // Run the PGQL query and get the result in PG-JSON

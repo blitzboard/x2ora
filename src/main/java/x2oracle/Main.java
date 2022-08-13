@@ -21,7 +21,9 @@ public class Main {
 	public static Connection conn;
 	public static PgqlConnection pgqlConn;
 	public static PgxSession pgxSession;
-	public static String strPgview;
+	public static String strPgv;
+	public static String strPgvNode;
+	public static String strPgvEdge;
 
 	public static void main(String[] args) throws Exception {
 
@@ -57,7 +59,9 @@ public class Main {
 		conn = pds.getConnection();
 		conn.setAutoCommit(false);
 		pgqlConn = PgqlConnection.getConnection(conn);
-		strPgview = rb.getString("pgview");
+		strPgv = rb.getString("pgview");
+		strPgvNode = strPgv + "node";
+		strPgvEdge = strPgv + "edge";
 
 		// Run a test query at startup
 		RetrievalController.countNodes();

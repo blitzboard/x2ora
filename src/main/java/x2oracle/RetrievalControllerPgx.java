@@ -13,7 +13,7 @@ public class RetrievalControllerPgx {
     long timeStart = System.nanoTime();
     String result = "";
     try {
-      PgqlResultSet rs = pgxSession.queryPgql("SELECT COUNT(v) FROM MATCH (v) ON " + strPgview);
+      PgqlResultSet rs = pgxSession.queryPgql("SELECT COUNT(v) FROM MATCH (v) ON " + strPgv);
       if (rs.first()){
         result = "Test query succeeded.";
       }

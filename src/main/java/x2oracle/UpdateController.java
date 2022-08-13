@@ -29,7 +29,7 @@ public class UpdateController {
       System.out.println("INFO: Graph received (" + pg.countNodes() + " nodes, " + pg.countEdges() + " edges).");
       String query = "";
 
-      query = "INSERT INTO x2pgv_node VALUES (?, ?, ?, ?)";
+      query = "INSERT INTO " + strPgvNode + " VALUES (?, ?, ?, ?)";
       PreparedStatement ps = conn.prepareStatement(query);
       for (PgNode node : pg.getNodes()) {
         try {
@@ -47,7 +47,7 @@ public class UpdateController {
       }
       ps.close();
 
-      query = "INSERT INTO x2pgv_edge VALUES (?, ?, ?, ?, ?, ?)";
+      query = "INSERT INTO " + strPgvEdge + " VALUES (?, ?, ?, ?, ?, ?)";
       ps = conn.prepareStatement(query);
       for (PgEdge edge : pg.getEdges()) {
         try {
@@ -85,7 +85,7 @@ public class UpdateController {
     } else {
       String query = "";
 
-      query = "DELETE FROM x2pgv_edge WHERE graph = ?";
+      query = "DELETE FROM " + strPgvEdge + " WHERE graph = ?";
       try (PreparedStatement ps = conn.prepareStatement(query)) {
         ps.setString(1, strGraph);
         ps.execute();
@@ -98,7 +98,7 @@ public class UpdateController {
         throw e;
       };
 
-      query = "DELETE FROM x2pgv_node WHERE graph = ?";
+      query = "DELETE FROM " + strPgvNode + " WHERE graph = ?";
       try (PreparedStatement ps = conn.prepareStatement(query)) {
         ps.setString(1, strGraph);
         ps.execute();
@@ -121,7 +121,7 @@ public class UpdateController {
   private static Boolean exists(String strGraph) throws SQLException {
     Boolean result = false;
     try {
-      String query = "SELECT graph FROM x2pgv_node WHERE graph = '" + strGraph.toUpperCase() + "' FETCH FIRST 1 ROWS ONLY";
+      String query = "SELECT graph FROM " + strPgvNode + " WHERE graph = '" + strGraph + "' FETCH FIRST 1 ROWS ONLY";
       PreparedStatement ps = conn.prepareStatement(query);
       ResultSet rs = ps.executeQuery();
       System.out.println(query);
@@ -202,7 +202,7 @@ public class UpdateController {
       // Check if the node exists
       if (able) {
         PgqlConnection pgqlConn = PgqlConnection.getConnection(conn);
-        PgqlPreparedStatement pps = pgqlConn.prepareStatement("SELECT v.id FROM MATCH (v) ON " + strPgview + " WHERE v.graph = ? AND v.label = ? AND v.id = ?");
+        PgqlPreparedStatement pps = pgqlConn.prepareStatement("SELECT v.id FROM MATCH (v) ON " + strPgv + " WHERE v.graph = ? AND v.label = ? AND v.id = ?");
         pps.setString(1, strGraph);
         pps.setString(2, strLabel.toUpperCase());
         pps.setString(3, strId);
@@ -218,7 +218,7 @@ public class UpdateController {
 
       // Insert the node if not exists
       if (able) {
-        String query = "INSERT INTO x2pgv_node VALUES (?, ?, ?, ?)";			
+        String query = "INSERT INTO " + strPgvNode + " VALUES (?, ?, ?, ?)";			
         try (PreparedStatement ps = conn.prepareStatement(query)) {
           ps.setString(1, strGraph);
           ps.setString(2, strId);
@@ -261,7 +261,7 @@ public class UpdateController {
 
       // Check if the node exists
       if (able) {
-        PgqlPreparedStatement pps = pgqlConn.prepareStatement("SELECT v.id FROM MATCH (v) ON " + strPgview + " WHERE v.graph = ? AND v.id = ?");
+        PgqlPreparedStatement pps = pgqlConn.prepareStatement("SELECT v.id FROM MATCH (v) ON " + strPgv + " WHERE v.graph = ? AND v.id = ?");
         pps.setString(1, strGraph);
         pps.setString(2, strSrcId);
         pps.execute();
@@ -274,7 +274,7 @@ public class UpdateController {
 
       // Check if the node exists
       if (able) {
-        PgqlPreparedStatement pps = pgqlConn.prepareStatement("SELECT v.id FROM MATCH (v) ON " + strPgview + " WHERE v.graph = ? AND v.id = ?");
+        PgqlPreparedStatement pps = pgqlConn.prepareStatement("SELECT v.id FROM MATCH (v) ON " + strPgv + " WHERE v.graph = ? AND v.id = ?");
         pps.setString(1, strGraph);
         pps.setString(2, strDstId);
         pps.execute();
@@ -289,7 +289,7 @@ public class UpdateController {
 
       // Check if the edge exists
       if (able) {
-        PgqlPreparedStatement pps = pgqlConn.prepareStatement("SELECT e.id FROM MATCH (src)-[e]->(dst) ON " + strPgview + " WHERE e.graph = ? AND e.label = ? AND src.id = ? AND dst.id = ?");
+        PgqlPreparedStatement pps = pgqlConn.prepareStatement("SELECT e.id FROM MATCH (src)-[e]->(dst) ON " + strPgv + " WHERE e.graph = ? AND e.label = ? AND src.id = ? AND dst.id = ?");
         pps.setString(1, strGraph);
         pps.setString(2, strLabel.toUpperCase());
         pps.setString(3, strSrcId);
