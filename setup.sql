@@ -1,5 +1,11 @@
 -- SQL
 
+CREATE TABLE x2graph (
+  id VARCHAR2(255)
+, props VARCHAR2(4000)
+, CONSTRAINT x2graph_pk PRIMARY KEY (id)
+);
+
 CREATE TABLE x2node (
   graph VARCHAR2(255)
 , id VARCHAR2(255)

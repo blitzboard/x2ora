@@ -48,11 +48,12 @@ public class RetrievalController {
     String result = "";
     List<String> response = new ArrayList<String>();
     try {
-      String query = "SELECT DISTINCT graph FROM " + strPgvNode;
+      //String query = "SELECT DISTINCT graph FROM " + strPgvNode;
+      String query = "SELECT id FROM " + strPgvGraph;
       PreparedStatement ps = conn.prepareStatement(query);
       ResultSet rs = ps.executeQuery();
       while (rs.next()) {
-        response.add(rs.getString("graph"));
+        response.add(rs.getString("id"));
       }
       rs.close();
       ps.close();

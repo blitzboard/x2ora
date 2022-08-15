@@ -1,0 +1,144 @@
+{
+  "name": "test1",
+  "properties": {"pg": ["aaa"], "config": ["bbb"]},
+  "pg": {
+    "nodes": [
+      {
+        "id": "Alice",
+        "labels": [
+        ],
+        "properties": {
+          "age": [
+            32
+          ]
+        }
+      },
+      {
+        "id": "Bob",
+        "labels": [
+          "person"
+        ],
+        "properties": {
+          "age": [
+            36
+          ]
+        }
+      },
+      {
+        "id": "Carol",
+        "labels": [
+          "person"
+        ],
+        "properties": {
+          "age": [
+            37
+          ]
+        }
+      },
+      {
+        "id": "David",
+        "labels": [
+          "person"
+        ],
+        "properties": {
+          "age": [
+            36
+          ]
+        }
+      },
+      {
+        "id": "Elle",
+        "labels": [
+          "person"
+        ],
+        "properties": {}
+      },
+      {
+        "id": "Fred",
+        "labels": [
+          "person"
+        ],
+        "properties": {}
+      }
+    ],
+    "edges": [
+      {
+        "from": "Alice",
+        "to": "Bob",
+        "undirected": false,
+        "labels": [
+          "knows"
+        ],
+        "properties": {
+          "since": [
+            2015
+          ]
+        }
+      },
+      {
+        "from": "Bob",
+        "to": "Carol",
+        "undirected": false,
+        "labels": [
+          "knows"
+        ],
+        "properties": {
+          "since": [
+            2017
+          ]
+        }
+      },
+      {
+        "from": "Carol",
+        "to": "David",
+        "undirected": false,
+        "labels": [
+          "knows"
+        ],
+        "properties": {
+          "since": [
+            2017
+          ]
+        }
+      },
+      {
+        "from": "Bob",
+        "to": "Elle",
+        "undirected": false,
+        "labels": [
+          "knows"
+        ],
+        "properties": {
+          "since": [
+            2017
+          ]
+        }
+      },
+      {
+        "from": "Elle",
+        "to": "Fred",
+        "undirected": false,
+        "labels": [
+          "knows"
+        ],
+        "properties": {
+          "since": [
+            2017
+          ]
+        }
+      },
+      {
+        "from": "Fred",
+        "to": "David",
+        "undirected": false,
+        "labels": [
+        ],
+        "properties": {
+          "since": [
+            2017
+          ]
+        }
+      }
+    ]
+  }
+}

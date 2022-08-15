@@ -22,6 +22,7 @@ public class Main {
 	public static PgqlConnection pgqlConn;
 	public static PgxSession pgxSession;
 	public static String strPgv;
+	public static String strPgvGraph;
 	public static String strPgvNode;
 	public static String strPgvEdge;
 
@@ -60,6 +61,7 @@ public class Main {
 		conn.setAutoCommit(false);
 		pgqlConn = PgqlConnection.getConnection(conn);
 		strPgv = rb.getString("pgview");
+		strPgvGraph = strPgv + "graph";
 		strPgvNode = strPgv + "node";
 		strPgvEdge = strPgv + "edge";
 

@@ -21,6 +21,7 @@ public class UpdateController {
 
     PgGraphNamed pgn = ctx.bodyAsClass(PgGraphNamed.class);
     String strGraph = pgn.getName();
+    String strGraphProps = pgn.getPropertiesJSON();
     PgGraph pg = pgn.getPg();
 
     if (exists(strGraph)) {
@@ -29,8 +30,22 @@ public class UpdateController {
       System.out.println("INFO: Graph received (" + pg.countNodes() + " nodes, " + pg.countEdges() + " edges).");
       String query = "";
 
-      query = "INSERT INTO " + strPgvNode + " VALUES (?, ?, ?, ?)";
+      query = "INSERT INTO " + strPgvGraph + " VALUES (?, ?)";
       PreparedStatement ps = conn.prepareStatement(query);
+      try {
+        ps.setString(1, strGraph);
+        ps.setString(2, strGraphProps);
+        ps.execute();
+      } catch (Exception e) {
+        conn.rollback();
+        System.out.println("rollback");
+        result = printException(e);
+        throw e;
+      };
+      ps.close();
+
+      query = "INSERT INTO " + strPgvNode + " VALUES (?, ?, ?, ?)";
+      ps = conn.prepareStatement(query);
       for (PgNode node : pg.getNodes()) {
         try {
           ps.setString(1, strGraph);
@@ -90,7 +105,7 @@ public class UpdateController {
         ps.setString(1, strGraph);
         ps.execute();
         ps.close();
-        result = result + "All nodes in " + strGraph + " is deleted.\n";
+        result = result + "All edges in " + strGraph + " is deleted.\n";
       } catch (Exception e) {
         conn.rollback();
         System.out.println("INFO: rollback");
@@ -103,7 +118,20 @@ public class UpdateController {
         ps.setString(1, strGraph);
         ps.execute();
         ps.close();
-        result = result + "All edges in " + strGraph + " is deleted.\n";
+        result = result + "All nodes in " + strGraph + " is deleted.\n";
+      } catch (Exception e) {
+        conn.rollback();
+        System.out.println("INFO: rollback");
+        result = printException(e);
+        throw e;
+      };
+
+      query = "DELETE FROM " + strPgvGraph + " WHERE id = ?";
+      try (PreparedStatement ps = conn.prepareStatement(query)) {
+        ps.setString(1, strGraph);
+        ps.execute();
+        ps.close();
+        result = result + "Graph " + strGraph + " is deleted.\n";
       } catch (Exception e) {
         conn.rollback();
         System.out.println("INFO: rollback");
@@ -121,7 +149,8 @@ public class UpdateController {
   private static Boolean exists(String strGraph) throws SQLException {
     Boolean result = false;
     try {
-      String query = "SELECT graph FROM " + strPgvNode + " WHERE graph = '" + strGraph + "' FETCH FIRST 1 ROWS ONLY";
+      //String query = "SELECT graph FROM " + strPgvNode + " WHERE graph = '" + strGraph + "' FETCH FIRST 1 ROWS ONLY";
+      String query = "SELECT id FROM " + strPgvGraph + " WHERE id = '" + strGraph + "' FETCH FIRST 1 ROWS ONLY";
       PreparedStatement ps = conn.prepareStatement(query);
       ResultSet rs = ps.executeQuery();
       System.out.println(query);
