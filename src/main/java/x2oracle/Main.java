@@ -73,6 +73,7 @@ public class Main {
 		app.post("/create/", UpdateController.create);
 		app.post("/drop/", UpdateController.drop);
 		app.get("/query/", RetrievalController.query);
+		app.get("/query_table/", RetrievalController.queryTable);
 		app.get("/list/", RetrievalController.list);
 	}
 	

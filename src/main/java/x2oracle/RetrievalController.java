@@ -10,6 +10,9 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -17,6 +20,7 @@ import java.sql.SQLException;
 import oracle.pg.rdbms.pgql.PgqlResultSet;
 import oracle.pg.rdbms.pgql.PgqlPreparedStatement;
 import oracle.pgql.lang.PgqlException;
+import oracle.pgql.lang.ResultSetMetaData;
 
 public class RetrievalController {
 
@@ -116,6 +120,44 @@ public class RetrievalController {
     HashMap<String, Object> response = new HashMap<>();
     response.put("request", ctx.fullUrl());
     response.put("pg", pg);
+    ctx.json(response);
+  };
+
+  public static Handler queryTable = ctx -> {
+    long timeStart = System.nanoTime();
+
+    String strQuery = ctx.queryParam("query");
+    System.out.println("INFO: A request is received: " + strQuery);
+    HashMap<String, Object> response = new HashMap<>();
+
+    // Run the PGQL query and get the result in table
+    try {
+      PgqlPreparedStatement ps = pgqlConn.prepareStatement(strQuery);
+      ps.execute();
+      PgqlResultSet rs = ps.getResultSet();
+      ResultSetMetaData md = rs.getMetaData();
+      ArrayList<HashMap<String, Object>> table = new ArrayList<>();
+      while (rs.next()) {
+        int numColumns = md.getColumnCount();
+        HashMap<String, Object> row = new HashMap<>();
+        for (int i=1; i<=numColumns; i++) {
+          String column_name = md.getColumnName(i);
+          row.put(column_name, rs.getObject(column_name));
+        }
+        table.add(row);
+      }
+      rs.close();
+      ps.close();
+      response.put("request", ctx.fullUrl());
+      response.put("table", table);
+      System.out.println("\n\n\nTable: " + table.toString() + "\n\n\n");
+      System.out.println("\n\n\nResponse: " + response.toString() + "\n\n\n");
+    } catch (PgqlException e) {
+      response.put("error", printException(e));
+    }
+    long timeEnd = System.nanoTime();
+    System.out.println("INFO: Execution time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms (queryTable)");
+    ctx.contentType("application/json");
     ctx.json(response);
   };
 

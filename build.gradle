@@ -33,6 +33,7 @@ dependencies {
 
     // Javalin
     implementation 'io.javalin:javalin:4.6.4'
+    implementation group: 'org.json', name: 'json', version: '20220320'
     
     // Oracle Graph Client
     implementation fileTree(dir: './oracle-graph-client-22.3.0/lib/', include: '*.jar', exclude: 'ons-19.12.0.0.jar')
