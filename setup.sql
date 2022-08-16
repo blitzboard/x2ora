@@ -2,8 +2,9 @@
 
 CREATE TABLE x2graph (
   id VARCHAR2(255)
-, props VARCHAR2(4000)
+, props CLOB
 , CONSTRAINT x2graph_pk PRIMARY KEY (id)
+, CONSTRAINT x2graph_check CHECK (props IS JSON)
 );
 
 CREATE TABLE x2node (

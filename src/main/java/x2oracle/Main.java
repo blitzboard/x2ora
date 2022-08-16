@@ -77,6 +77,7 @@ public class Main {
 		app.get("/query/", RetrievalController.query);
 		app.get("/query_table/", RetrievalController.queryTable);
 		app.get("/list/", RetrievalController.list);
+		app.get("/get/", RetrievalController.get);
 	}
 	
 	private static SslContextFactory getSslContextFactory() {

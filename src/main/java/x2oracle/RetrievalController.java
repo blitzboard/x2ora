@@ -65,6 +65,29 @@ public class RetrievalController {
     ctx.json(response);
   };
 
+  public static Handler get = ctx -> {
+    long timeStart = System.nanoTime();
+    String strGraph = ctx.queryParam("graph");
+    String response;
+    try {
+      String query = "SELECT props FROM " + strPgvGraph + " WHERE id = '" + strGraph + "'";
+      PreparedStatement ps = conn.prepareStatement(query);
+      ResultSet rs = ps.executeQuery();
+      if (rs.next()) {
+        response = rs.getString("props");
+      } else {
+        response = "Graph " + strGraph + " does not exist.";
+      }
+      rs.close();
+      ps.close();
+    } catch (SQLException e) {
+      response = printException(e);
+    }
+    long timeEnd = System.nanoTime();
+    System.out.println("INFO: Execution Time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms ( get/ )");
+    ctx.json(response);
+  };
+
   public static Handler query = ctx -> {
     long timeStart = System.nanoTime();
 
