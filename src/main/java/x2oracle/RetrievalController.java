@@ -8,12 +8,8 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import org.json.JSONArray;
-import org.json.JSONObject;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -47,10 +43,8 @@ public class RetrievalController {
 
   public static Handler list = ctx -> {
     long timeStart = System.nanoTime();
-    String result = "";
-    List<String> response = new ArrayList<String>();
+    LinkedList<String> response = new LinkedList<String>();
     try {
-      //String query = "SELECT DISTINCT graph FROM " + strPgvNode;
       String query = "SELECT id FROM " + strPgvGraph;
       PreparedStatement ps = conn.prepareStatement(query);
       ResultSet rs = ps.executeQuery();
@@ -60,11 +54,12 @@ public class RetrievalController {
       rs.close();
       ps.close();
     } catch (SQLException e) {
-      result = printException(e);
+      response.add(printException(e));
     }
-    long timeEnd = System.nanoTime();
-    System.out.println("INFO: Execution Time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms (" + result + ")");
+    ctx.contentType("application/json");
     ctx.json(response);
+    long timeEnd = System.nanoTime();
+    System.out.println("INFO: Execution Time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms (list)");
   };
 
   public static Handler get = ctx -> {
@@ -75,7 +70,6 @@ public class RetrievalController {
     if (strResponse == null) {
       strResponse = "properties";
     }
-    // System.out.println("\n\n\nstrResponse: " + strResponse + "\n\n\n");
     if (strResponse == "properties") {
       try {
         String query = "SELECT props FROM " + strPgvGraph + " WHERE id = '" + strGraph + "'";
@@ -92,9 +86,10 @@ public class RetrievalController {
         response = printException(e);
       }
     }
+    ctx.contentType("application/json");
+    ctx.json(response);
     long timeEnd = System.nanoTime();
     System.out.println("INFO: Execution Time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms ( get/ )");
-    ctx.json(response);
   };
 
   public static Handler query = ctx -> {
@@ -110,7 +105,6 @@ public class RetrievalController {
     int cntNode = 0; 
     Matcher matcherNode = Pattern.compile("\\((\\w+)\\)").matcher(strMatch);
     while (matcherNode.find()) {
-      System.out.println("\n\n\nNode: " + matcherNode.group(1) + "\n\n\n");
       String v = matcherNode.group(1);
       strSelect = strSelect + v + ".id AS " + v + "_id, " + v + ".label AS " + v + "_label, " + v + ".props AS " + v + "_props, ";
       strWhere = strWhere + v + ".graph = '" + strGraph + "' AND ";
@@ -119,7 +113,6 @@ public class RetrievalController {
     int cntEdge = 0; 
     Matcher matcherEdge = Pattern.compile("\\[(\\w+)\\]").matcher(strMatch);
     while (matcherEdge.find()) {
-      System.out.println("\n\n\nEdge: " + matcherEdge.group(1) + "\n\n\n");
       String v = matcherEdge.group(1);
       strSelect = strSelect + v + ".id AS " + v + "_id, " + v + ".src AS " + v + "_src, " + v + ".dst AS " + v + "_dst, " + v + ".label AS " + v + "_label, " + v + ".props AS " + v + "_props, ";
       strWhere = strWhere + v + ".graph = '" + strGraph + "' AND ";
@@ -133,27 +126,24 @@ public class RetrievalController {
     System.out.println("INFO: Query is modified:" + strMatch);
 
     // Run the PGQL query and get the result in PG-JSON
-    String result = "";
+    HashMap<String, Object> response = new HashMap<>();
     PgGraph pg = new PgGraph();
     try {
       PgqlPreparedStatement ps = pgqlConn.prepareStatement(strMatch);
       ps.execute();
       PgqlResultSet rs = ps.getResultSet();
-      result = "Query result is retrieved.";
       pg = getResultPG(rs, cntNode, cntEdge);
       rs.close();
       ps.close();
+      response.put("request", ctx.fullUrl());
+      response.put("pg", pg);
     } catch (PgqlException e) {
-      result = printException(e);
+      response.put("error", printException(e));
     }
-    long timeEnd = System.nanoTime();
-    System.out.println("INFO: Execution time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms (" + result + ")");
-    ctx.result(result);
     ctx.contentType("application/json");
-    HashMap<String, Object> response = new HashMap<>();
-    response.put("request", ctx.fullUrl());
-    response.put("pg", pg);
     ctx.json(response);
+    long timeEnd = System.nanoTime();
+    System.out.println("INFO: Execution time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms (query)");
   };
 
   public static Handler queryTable = ctx -> {
@@ -190,8 +180,6 @@ public class RetrievalController {
       table.put("records", records);
       response.put("request", ctx.fullUrl());
       response.put("table", table);
-      System.out.println("\n\n\nTable: " + table.toString() + "\n\n\n");
-      System.out.println("\n\n\nResponse: " + response.toString() + "\n\n\n");
     } catch (PgqlException e) {
       response.put("error", printException(e));
     }

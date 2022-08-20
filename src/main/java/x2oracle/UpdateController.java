@@ -149,7 +149,6 @@ public class UpdateController {
   private static Boolean exists(String strGraph) throws SQLException {
     Boolean result = false;
     try {
-      //String query = "SELECT graph FROM " + strPgvNode + " WHERE graph = '" + strGraph + "' FETCH FIRST 1 ROWS ONLY";
       String query = "SELECT id FROM " + strPgvGraph + " WHERE id = '" + strGraph + "' FETCH FIRST 1 ROWS ONLY";
       PreparedStatement ps = conn.prepareStatement(query);
       ResultSet rs = ps.executeQuery();
