@@ -5,7 +5,9 @@ import static x2oracle.Main.*;
 import io.javalin.http.Handler;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -68,20 +70,27 @@ public class RetrievalController {
   public static Handler get = ctx -> {
     long timeStart = System.nanoTime();
     String strGraph = ctx.queryParam("graph");
-    String response;
-    try {
-      String query = "SELECT props FROM " + strPgvGraph + " WHERE id = '" + strGraph + "'";
-      PreparedStatement ps = conn.prepareStatement(query);
-      ResultSet rs = ps.executeQuery();
-      if (rs.next()) {
-        response = rs.getString("props");
-      } else {
-        response = "Graph " + strGraph + " does not exist.";
+    String strResponse = ctx.queryParam("response");
+    String response = "";
+    if (strResponse == null) {
+      strResponse = "properties";
+    }
+    // System.out.println("\n\n\nstrResponse: " + strResponse + "\n\n\n");
+    if (strResponse == "properties") {
+      try {
+        String query = "SELECT props FROM " + strPgvGraph + " WHERE id = '" + strGraph + "'";
+        PreparedStatement ps = conn.prepareStatement(query);
+        ResultSet rs = ps.executeQuery();
+        if (rs.next()) { 
+          response = rs.getString("props");
+        } else {
+          response = "Graph " + strGraph + " does not exist.";
+        }
+        rs.close();
+        ps.close();
+      } catch (SQLException e) {
+        response = printException(e);
       }
-      rs.close();
-      ps.close();
-    } catch (SQLException e) {
-      response = printException(e);
     }
     long timeEnd = System.nanoTime();
     System.out.println("INFO: Execution Time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms ( get/ )");
@@ -160,18 +169,25 @@ public class RetrievalController {
       ps.execute();
       PgqlResultSet rs = ps.getResultSet();
       ResultSetMetaData md = rs.getMetaData();
-      ArrayList<HashMap<String, Object>> table = new ArrayList<>();
+      LinkedHashMap<String, Object> table = new LinkedHashMap<>();
+      LinkedList<String> columns = new LinkedList<>();
+      LinkedList<HashMap<String, Object>> records = new LinkedList<>();
+      int columnCount = md.getColumnCount();
+      for (int i=1; i<=columnCount; i++) {
+        columns.add(md.getColumnName(i));
+      }
       while (rs.next()) {
-        int numColumns = md.getColumnCount();
-        HashMap<String, Object> row = new HashMap<>();
-        for (int i=1; i<=numColumns; i++) {
-          String column_name = md.getColumnName(i);
-          row.put(column_name, rs.getObject(column_name));
+        LinkedHashMap<String, Object> record = new LinkedHashMap<>();
+        for (int i=1; i<=columnCount; i++) {
+          String columnName = md.getColumnName(i);
+          record.put(columnName, rs.getObject(columnName));
         }
-        table.add(row);
+        records.add(record);
       }
       rs.close();
       ps.close();
+      table.put("columns", columns);
+      table.put("records", records);
       response.put("request", ctx.fullUrl());
       response.put("table", table);
       System.out.println("\n\n\nTable: " + table.toString() + "\n\n\n");
