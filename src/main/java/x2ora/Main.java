@@ -1,4 +1,4 @@
-package x2oracle;
+package x2ora;
 
 import io.javalin.Javalin;
 import java.sql.Connection;

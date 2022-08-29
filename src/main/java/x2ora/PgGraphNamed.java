@@ -1,4 +1,4 @@
-package x2oracle;
+package x2ora;
 
 import java.util.HashMap;
 import java.util.List;

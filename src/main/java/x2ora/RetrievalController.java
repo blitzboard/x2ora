@@ -1,6 +1,4 @@
-package x2oracle;
-
-import static x2oracle.Main.*;
+package x2ora;
 
 import io.javalin.http.Handler;
 
@@ -9,6 +7,8 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static x2ora.Main.*;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;

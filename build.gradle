@@ -13,7 +13,7 @@ plugins {
     id 'application'
 }
 
-mainClassName = 'x2oracle.Main'
+mainClassName = 'x2ora.Main'
 
 repositories {
     // Use jcenter for resolving dependencies.

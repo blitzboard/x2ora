@@ -1,10 +1,12 @@
-package x2oracle;
+package x2ora;
 
 import io.javalin.http.Handler;
+
+import static x2ora.Main.*;
+
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import static x2oracle.Main.*;
 
 import oracle.pg.rdbms.pgql.PgqlConnection;
 import oracle.pg.rdbms.pgql.PgqlResultSet;
