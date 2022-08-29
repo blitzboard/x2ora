@@ -4,7 +4,6 @@ import static x2oracle.Main.*;
 
 import io.javalin.http.Handler;
 
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;

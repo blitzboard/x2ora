@@ -29,7 +29,9 @@ dependencies {
     implementation 'com.google.guava:guava:28.0-jre'
 
     // Use JUnit test framework
-    testImplementation 'junit:junit:4.12'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.8.1'
+    testImplementation 'io.javalin:javalin-testtools:4.6.1'
+    testImplementation 'org.assertj:assertj-core:3.23.1'
 
     // Javalin
     implementation 'io.javalin:javalin:4.6.4'
@@ -38,4 +40,8 @@ dependencies {
     // Oracle Graph Client
     implementation fileTree(dir: './oracle-graph-client-22.3.0/lib/', include: '*.jar', exclude: 'ons-19.12.0.0.jar')
     // implementation fileTree(dir: '/opt/oracle/graph/client/lib/', include: '*.jar', exclude: 'ons-19.12.12.0.0.jar')
+}
+
+test {
+    useJUnitPlatform()
 }

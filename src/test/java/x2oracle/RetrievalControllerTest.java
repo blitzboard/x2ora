@@ -1,12 +1,31 @@
 package x2oracle;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import static org.assertj.core.api.Assertions.*;
 
-import static org.junit.Assert.*;
+import io.javalin.Javalin;
+import io.javalin.testtools.JavalinTest;
 
 public class RetrievalControllerTest {
+
+    /*
+    Javalin app = Javalin.create();
+    
     @Test
-    public void testTest() {
-        assertEquals("Test query succeeded.", RetrievalController.nodeMatch, "Test query");
+    public void testList() {
+        JavalinTest.test(app, (server, client) -> {
+            assertThat(client.get("/list").code()).isEqualTo(200);
+        });
     }
+    */
+
+    /*
+    @Test
+    public void testList() {
+        JavalinTest.test((app, client) -> {
+            app.get("/list/", RetrievalController.list);
+            assertThat(client.get("/list/").code()).isEqualTo(200);
+        });
+    }
+    */
 }
