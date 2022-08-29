@@ -10,6 +10,10 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import org.slf4j.LoggerFactory;
+
 import oracle.ucp.jdbc.PoolDataSourceFactory;
 import oracle.ucp.jdbc.PoolDataSource;
 import oracle.pg.rdbms.GraphServer;
@@ -27,6 +31,9 @@ public class Main {
 	public static String strPgvEdge;
 
 	public static void main(String[] args) throws Exception {
+
+		Logger logger = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+		logger.setLevel(Level.WARN);
 
 		Javalin app = Javalin.create(config -> {
 			config.enableCorsForAllOrigins();
