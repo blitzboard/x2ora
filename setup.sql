@@ -13,6 +13,7 @@ CREATE TABLE x2node (
 , label VARCHAR2(255)
 , props VARCHAR2(4000)
 , CONSTRAINT x2node_pk PRIMARY KEY (graph, id)
+, CONSTRAINT x2node_fk_graph FOREIGN KEY (graph) REFERENCES x2graph(id)
 , CONSTRAINT x2node_check CHECK (props IS JSON)
 );
 
@@ -24,6 +25,7 @@ CREATE TABLE x2edge (
 , label VARCHAR2(255)
 , props VARCHAR2(4000)
 , CONSTRAINT x2edge_pk PRIMARY KEY (graph, id)
+, CONSTRAINT x2edge_fk_graph FOREIGN KEY (graph) REFERENCES x2graph(id)
 , CONSTRAINT x2edge_fk_src FOREIGN KEY (graph, src) REFERENCES x2node(graph, id)
 , CONSTRAINT x2edge_fk_dst FOREIGN KEY (graph, dst) REFERENCES x2node(graph, id)
 , CONSTRAINT x2edge_check CHECK (props IS JSON)
