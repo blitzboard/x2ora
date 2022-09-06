@@ -65,30 +65,78 @@ public class RetrievalController {
     long timeStart = System.nanoTime();
     String strGraph = ctx.queryParam("graph");
     String strResponse = ctx.queryParam("response");
-    String response = "";
-    if (strResponse == null) {
-      strResponse = "properties";
-    }
-    if (strResponse == "properties") {
-      try {
-        String query = "SELECT props FROM " + strPgvGraph + " WHERE id = '" + strGraph + "'";
-        PreparedStatement ps = conn.prepareStatement(query);
-        ResultSet rs = ps.executeQuery();
-        if (rs.next()) { 
-          response = rs.getString("props");
-        } else {
-          response = "Graph " + strGraph + " does not exist.";
-        }
-        rs.close();
-        ps.close();
-      } catch (SQLException e) {
-        response = printException(e);
-      }
+    HashMap<String, Object> response = new HashMap<>();
+    if (strResponse == null || strResponse.equals("properties")) {
+      response = getProperties(strGraph);
+    } else if (strResponse.equals("pg")) {
+      response = getPG(strGraph);
     }
     ctx.contentType("application/json");
     ctx.json(response);
     long timeEnd = System.nanoTime();
     System.out.println("INFO: Execution Time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms ( get/ )");
+  };
+
+  private static HashMap<String, Object> getProperties(String strGraph) {
+    HashMap<String, Object> response = new HashMap<>();
+    try {
+      String query = "SELECT props FROM " + strPgvGraph + " WHERE id = ?";
+      PreparedStatement ps = conn.prepareStatement(query);
+      ps.setString(1, strGraph);
+      ResultSet rs = ps.executeQuery();
+      if (rs.next()) {
+        response.put("id", strGraph);
+        response.put("properties", rs.getString("props"));
+      } else {
+        response.put("id", strGraph);
+        response.put("error", "Graph " + strGraph + " does not exist.");
+      }
+      rs.close();
+      ps.close();
+    } catch (SQLException e) {
+      response.put("error", printException(e));
+    }
+    return response;
+  };
+
+  private static HashMap<String, Object> getPG(String strGraph) {
+    HashMap<String, Object> response = new HashMap<>();
+    PgGraph pg = new PgGraph();
+    try {
+      // Nodes
+      String query = "SELECT * FROM " + strPgvNode + " WHERE graph = ?";
+      PreparedStatement ps = conn.prepareStatement(query);
+      ps.setString(1, strGraph);
+      ResultSet rs = ps.executeQuery();
+      while (rs.next()) {
+        PgNode node = new PgNode(
+          rs.getObject("id"),
+          rs.getString("label"),
+          rs.getString("props"));
+        pg.addNode(node);
+      }
+      // Edges
+      query = "SELECT * FROM " + strPgvEdge + " WHERE graph = ?";
+      ps = conn.prepareStatement(query);
+      ps.setString(1, strGraph);
+      rs = ps.executeQuery();
+      while (rs.next()) {
+        PgEdge edge = new PgEdge(
+          rs.getObject("src"),
+          rs.getObject("dst"),
+          false, // undirected
+          rs.getString("label"),
+          rs.getString("props"));
+        pg.addEdge(edge);
+      }
+      rs.close();
+      ps.close();
+      response.put("id", strGraph);
+      response.put("pg", pg);
+    } catch (SQLException e) {
+      response.put("error", printException(e));
+    }
+    return response;
   };
 
   public static Handler query = ctx -> {
