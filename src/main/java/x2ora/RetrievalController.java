@@ -143,33 +143,36 @@ public class RetrievalController {
     long timeStart = System.nanoTime();
 
     String strGraph = ctx.queryParam("graph");
-    String strMatch = ctx.queryParam("query");
+    String strMatch = ctx.queryParam("match");
+    String strWhere = ctx.queryParam("where");
     System.out.println("INFO: A request is received: " + strMatch);
 
     // SELECT and WHERE
     String strSelect = "\nSELECT ";
-    String strWhere = "\nWHERE ";
+    if (strWhere == null || strWhere.equals("")) {
+      strWhere = "1 = 1";
+    }
+    String strWhereGraph = "";
     int cntNode = 0; 
     Matcher matcherNode = Pattern.compile("\\((\\w+)\\)").matcher(strMatch);
     while (matcherNode.find()) {
       String v = matcherNode.group(1);
       strSelect = strSelect + v + ".id AS " + v + "_id, " + v + ".label AS " + v + "_label, " + v + ".props AS " + v + "_props, ";
-      strWhere = strWhere + v + ".graph = '" + strGraph + "' AND ";
+      strWhereGraph = strWhereGraph + v + ".graph = '" + strGraph + "' AND ";
       cntNode++;
     }
     int cntEdge = 0; 
     Matcher matcherEdge = Pattern.compile("\\[(\\w+)\\]").matcher(strMatch);
     while (matcherEdge.find()) {
       String v = matcherEdge.group(1);
-      strSelect = strSelect + v + ".id AS " + v + "_id, " + v + ".src AS " + v + "_src, " + v + ".dst AS " + v + "_dst, " + v + ".label AS " + v + "_label, " + v + ".props AS " + v + "_props, ";
-      strWhere = strWhere + v + ".graph = '" + strGraph + "' AND ";
+      strSelect = strSelect + v + ".src AS " + v + "_src, " + v + ".dst AS " + v + "_dst, " + v + ".label AS " + v + "_label, " + v + ".props AS " + v + "_props, ";
+      strWhereGraph = strWhereGraph + v + ".graph = '" + strGraph + "' AND ";
       cntEdge++;
     }
     strSelect = strSelect + "1 ";
-    strWhere = strWhere + "1 = 1";
 
     // Complete PGQL query
-    strMatch = strSelect + "\nFROM " + strMatch + " " + strWhere;
+    strMatch = strSelect + "\nFROM MATCH " + strMatch + "\nWHERE " + strWhereGraph + strWhere;
     System.out.println("INFO: Query is modified:" + strMatch);
 
     // Run the PGQL query and get the result in PG-JSON
@@ -242,14 +245,14 @@ public class RetrievalController {
 			while (rs.next()) {
 
 				int lengthNode = 3; // ID + Label + JSON Props
-				int lengthEdge = 4; // ID + Src Node ID + Dst Node ID + Label + JSON Props
+				int lengthEdge = 4; // Src Node ID + Dst Node ID + Label + JSON Props
 
 				int offsetEdge = cntNode * lengthNode; // Edge Offset
 				int offsetNodeList = offsetEdge + (cntEdge * lengthEdge); // Node List Offset
         
 				// Nodes
 				for (int i = 1; i <= offsetEdge; i = i + lengthNode) {
-					Object id = rs.getObject(i);
+					Object id = rs.getObject(i + 0);
           if (!pg.hasNodeId(id)) {
             String label = rs.getString(i + 1);
             String props = rs.getString(i + 2);
@@ -259,11 +262,11 @@ public class RetrievalController {
 				}
 				// Edges
 				for (int i = offsetEdge + 1; i <= offsetNodeList; i = i + lengthEdge) {
-					String idSrc = rs.getString(i + 1);
-          String idDst = rs.getString(i + 2);
+					String idSrc = rs.getString(i + 0);
+          String idDst = rs.getString(i + 1);
           boolean undirected = false;
-          String label = rs.getString(i + 3);
-          String props = rs.getString(i + 4);
+          String label = rs.getString(i + 2);
+          String props = rs.getString(i + 3);
           PgEdge edge = new PgEdge(idSrc, idDst, undirected, label, props);
           pg.addEdge(edge);
 				}
