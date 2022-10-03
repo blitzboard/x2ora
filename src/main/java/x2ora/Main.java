@@ -68,6 +68,7 @@ public class Main {
 		conn.setAutoCommit(false);
 		pgqlConn = PgqlConnection.getConnection(conn);
 		strPgv = rb.getString("pgview");
+		pgqlConn.setGraph(strPgv);
 		strPgvGraph = strPgv + "graph";
 		strPgvNode = strPgv + "node";
 		strPgvEdge = strPgv + "edge";

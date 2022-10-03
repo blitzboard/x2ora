@@ -25,7 +25,7 @@ public class RetrievalController {
     long timeStart = System.nanoTime();
     String result = "";
     try {
-      PgqlPreparedStatement ps = pgqlConn.prepareStatement("SELECT COUNT(v) FROM MATCH (v) ON " + strPgv);
+      PgqlPreparedStatement ps = pgqlConn.prepareStatement("SELECT COUNT(v) FROM MATCH (v)");
       PgqlResultSet rs = ps.executeQuery();
       if (rs.first()){
         result = "Test query succeeded.";
@@ -166,10 +166,10 @@ public class RetrievalController {
       cntEdge++;
     }
     strSelect = strSelect + "1 ";
-    strWhere = strWhere + " 1 = 1";
+    strWhere = strWhere + "1 = 1";
 
     // Complete PGQL query
-    strMatch = strSelect + "\nFROM " + strMatch + " ON " + strPgv + strWhere;
+    strMatch = strSelect + "\nFROM " + strMatch + " " + strWhere;
     System.out.println("INFO: Query is modified:" + strMatch);
 
     // Run the PGQL query and get the result in PG-JSON
