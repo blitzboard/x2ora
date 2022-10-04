@@ -379,7 +379,7 @@ public class UpdateController {
           ps.setString(5, strLabel);
           ps.setString(6, strProps);
           ps.execute();
-          result = "Edge " + strLabel + " " + strSrcId + " -> " + strDstId + " is added." + strProps + strGraph;
+          result = "Edge " + strLabel + " " + strSrcId + " -> " + strDstId + " is added.";
           ps.close();
         } catch (Exception e) {
           conn.rollback();
