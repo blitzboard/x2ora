@@ -135,12 +135,13 @@ class PgNode {
     }
     return label;
   }
-
+  
   public String getPropertiesJSON() throws JsonProcessingException {
     ObjectMapper mapper = new ObjectMapper();
     String json = mapper.writeValueAsString(properties);
     return json;
   }
+  
 }
 
 class PgEdge {
@@ -220,10 +221,11 @@ class PgEdge {
     }
     return label;
   }
-
+  
   public String getPropertiesJSON() throws JsonProcessingException {
     ObjectMapper mapper = new ObjectMapper();
     String json = mapper.writeValueAsString(properties);
     return json;
   }
+  
 }

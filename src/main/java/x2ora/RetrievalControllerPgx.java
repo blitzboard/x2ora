@@ -3,8 +3,6 @@ package x2ora;
 import io.javalin.http.Handler;
 
 import java.util.HashMap;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static x2ora.Main.*;
 

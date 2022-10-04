@@ -19,6 +19,11 @@ import oracle.pg.rdbms.pgql.PgqlPreparedStatement;
 import oracle.pgql.lang.PgqlException;
 import oracle.pgql.lang.ResultSetMetaData;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.List;
+
 public class RetrievalController {
 
   public static String countNodes() throws Exception {
@@ -86,14 +91,17 @@ public class RetrievalController {
       ResultSet rs = ps.executeQuery();
       if (rs.next()) {
         response.put("id", strGraph);
-        response.put("properties", rs.getString("props"));
+        ObjectMapper mapper = new ObjectMapper();
+        TypeReference<HashMap<String, List<Object>>> typeRef = new TypeReference<HashMap<String, List<Object>>>(){};
+        HashMap<String, List<Object>> properties = mapper.readValue(rs.getString("props"), typeRef);
+        response.put("properties", properties);
       } else {
         response.put("id", strGraph);
         response.put("error", "Graph " + strGraph + " does not exist.");
       }
       rs.close();
       ps.close();
-    } catch (SQLException e) {
+    } catch (SQLException | JsonProcessingException e) {
       response.put("error", printException(e));
     }
     return response;
