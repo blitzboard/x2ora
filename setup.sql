@@ -69,7 +69,7 @@ INSERT INTO x2node VALUES ('TEST', '1', 'PERSON', '{"AGE":[37]}');
 INSERT INTO x2node VALUES ('TEST', '2', 'PERSON', '{"AGE":[36]}');
 INSERT INTO x2edge VALUES ('TEST', '73da3dd7-2518-459a-9c36-c2104a95fc7f', '1', '2', 'KNOWS', '{"SINCE":[2017]}');
 
--- PGQL
+-- Graph model v1
 
 DROP PROPERTY GRAPH x2;
 
@@ -89,3 +89,49 @@ CREATE PROPERTY GRAPH x2
       PROPERTIES (graph, id, label, src, dst, props)
   )
   OPTIONS (PG_VIEW);
+
+-- Graph model v2
+
+CREATE VIEW x2nodev AS
+SELECT
+  graph || ',' || id AS gid
+, graph
+, id
+, label
+, props
+FROM x2node;
+
+CREATE VIEW x2edgev AS
+SELECT
+  graph || ',' || id AS gid
+, graph
+, id
+, graph || ',' || src AS gsrc
+, graph || ',' || dst AS gdst
+, src
+, dst
+, label
+, props
+FROM x2edge;
+
+DROP PROPERTY GRAPH x2;
+
+CREATE PROPERTY GRAPH x2
+  VERTEX TABLES (
+    x2nodev
+      KEY (gid)
+      LABEL node
+      PROPERTIES (graph, id, label, props)
+  )
+  EDGE TABLES (
+    x2edgev
+      KEY (gid)
+      SOURCE KEY(gsrc) REFERENCES x2nodev
+      DESTINATION KEY(gdst) REFERENCES x2nodev
+      LABEL edge
+      PROPERTIES (graph, id, src, dst, label, props)
+  )
+  OPTIONS (PG_VIEW);
+
+select * from match (n1)-[e]->(n2) on x2 limit 5
+

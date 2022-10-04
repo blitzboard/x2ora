@@ -25,6 +25,7 @@ public class Main {
 	public static Connection conn;
 	public static PgqlConnection pgqlConn;
 	public static PgxSession pgxSession;
+	public static PgxGraph pgxGraph;
 	public static String strPgv;
 	public static String strPgvGraph;
 	public static String strPgvNode;
@@ -57,6 +58,8 @@ public class Main {
 			rb.getString("password").toCharArray()
 		);
 		pgxSession = instance.createSession("x2ora");
+		strPgv = rb.getString("pgview");
+		pgxGraph = pgxSession.getGraph(strPgv.toUpperCase());
 		
 	  // Connection for PGV
 		PoolDataSource pds = PoolDataSourceFactory.getPoolDataSource();
@@ -75,6 +78,7 @@ public class Main {
 
 		// Run a test query at startup
 		RetrievalController.countNodes();
+		RetrievalControllerPgx.countNodes();
 
 		System.out.println("INFO: Ready to accept requests");
 		//app.post("/merge_node/", UpdateController.mergeNode); 
@@ -83,6 +87,7 @@ public class Main {
 		app.post("/create/", UpdateController.create);
 		app.post("/drop/", UpdateController.drop);
 		app.get("/query/", RetrievalController.query);
+		app.get("/query_path/", RetrievalControllerPgx.queryPath);
 		app.get("/query_table/", RetrievalController.queryTable);
 		app.get("/list/", RetrievalController.list);
 		app.get("/get/", RetrievalController.get);

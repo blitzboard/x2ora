@@ -28,7 +28,7 @@ public class RetrievalController {
       PgqlPreparedStatement ps = pgqlConn.prepareStatement("SELECT COUNT(v) FROM MATCH (v)");
       PgqlResultSet rs = ps.executeQuery();
       if (rs.first()){
-        result = "Test query succeeded.";
+        result = "Test query succeeded. PGV nodes: " + rs.getInteger(1).toString();
       }
       rs.close();
       ps.close();
@@ -158,7 +158,9 @@ public class RetrievalController {
     while (matcherNode.find()) {
       String v = matcherNode.group(1);
       strSelect = strSelect + v + ".id AS " + v + "_id, " + v + ".label AS " + v + "_label, " + v + ".props AS " + v + "_props, ";
-      strWhereGraph = strWhereGraph + v + ".graph = '" + strGraph + "' AND ";
+      if (!(strGraph == null || strGraph.equals(""))) {
+        strWhereGraph = strWhereGraph + v + ".graph = '" + strGraph + "' AND ";
+      }
       cntNode++;
     }
     int cntEdge = 0; 
@@ -166,7 +168,9 @@ public class RetrievalController {
     while (matcherEdge.find()) {
       String v = matcherEdge.group(1);
       strSelect = strSelect + v + ".src AS " + v + "_src, " + v + ".dst AS " + v + "_dst, " + v + ".label AS " + v + "_label, " + v + ".props AS " + v + "_props, ";
-      strWhereGraph = strWhereGraph + v + ".graph = '" + strGraph + "' AND ";
+      if (!(strGraph == null || strGraph.equals(""))) {
+        strWhereGraph = strWhereGraph + v + ".graph = '" + strGraph + "' AND ";
+      }
       cntEdge++;
     }
     strSelect = strSelect + "1 ";

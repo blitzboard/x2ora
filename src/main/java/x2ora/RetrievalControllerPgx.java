@@ -1,12 +1,15 @@
 package x2ora;
 
 import io.javalin.http.Handler;
-import oracle.pgql.lang.PgqlException;
-import oracle.pgx.api.PgqlResultSet;
+
+import java.util.HashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static x2ora.Main.*;
 
-import java.util.HashMap;
+import oracle.pgx.api.PgqlResultSet;
+import oracle.pgql.lang.PgqlException;
 
 public class RetrievalControllerPgx {
 
@@ -14,9 +17,9 @@ public class RetrievalControllerPgx {
     long timeStart = System.nanoTime();
     String result = "";
     try {
-      PgqlResultSet rs = pgxSession.queryPgql("SELECT COUNT(v) FROM MATCH (v) ON " + strPgv);
+      PgqlResultSet rs = pgxGraph.queryPgql("SELECT COUNT(v) FROM MATCH (v)");
       if (rs.first()){
-        result = "Test query succeeded.";
+        result = "Test query succeeded. PGX nodes: " + rs.getInteger(1).toString();
       }
     } catch (PgqlException e) {
       result = printException(e);
@@ -26,58 +29,74 @@ public class RetrievalControllerPgx {
     return result;
   };
 
-  public static Handler nodeMatch = ctx -> {
+  public static Handler queryPath = ctx -> {
+    long timeStart = System.nanoTime();
 
     String strGraph = ctx.queryParam("graph");
-    String strIds = ctx.queryParam("node_ids[]");
-    String strLabels = ctx.queryParam("node_labels[]").toUpperCase();
-    String strLimit = ctx.queryParam("limit");
-    
-    String strWhere = " WHERE 1 = 1";
-    if (!strIds.isEmpty()) {
-      strWhere = strWhere + " AND v.id = '" + strIds + "'"; // Should be replaced to IN () in 21.3 
-    }
-    if (!strLabels.isEmpty()) {
-      strWhere = strWhere + " AND LABEL(v) = '" + strLabels + "'"; // Should be replaced to IN () in 21.3
-    }
-    String clauseLimit = " LIMIT " + strLimit;
-    String strQuery = "SELECT v.id, LABEL(v), v.props FROM MATCH (v) ON " + strGraph + strWhere + clauseLimit;    
-    System.out.println("INFO: A request is received: " + strQuery);
+    String strMatch = ctx.queryParam("match");
+    String strWhere = ctx.queryParam("where");
+    System.out.println("INFO: A request is received: " + strMatch);
 
-    long timeStart = System.nanoTime();
-    String result = "";
+    // SELECT and WHERE
+    String strSelect = "\nSELECT DISTINCT ";
+    if (strWhere == null || strWhere.equals("")) {
+      strWhere = "1 = 1";
+    }
+    String strWhereGraph = "";
+    int cntNode = 2; 
+    String[] nodes = {"path_src", "path_dst"};
+    for (String v : nodes) {
+      strSelect = strSelect + v + ".id AS " + v + "_id, " + v + ".label AS " + v + "_label, " + v + ".props AS " + v + "_props, ";
+      if (!(strGraph == null || strGraph.equals(""))) {
+        strWhereGraph = strWhereGraph + v + ".graph = '" + strGraph + "' AND ";
+      }
+    }
+    int cntEdge = 1; 
+    String[] edges = {"path_edge"};
+    for (String v : edges) {
+      strSelect = strSelect + v + ".src AS " + v + "_src, " + v + ".dst AS " + v + "_dst, " + v + ".label AS " + v + "_label, " + v + ".props AS " + v + "_props, ";
+      if (!(strGraph == null || strGraph.equals(""))) {
+        strWhereGraph = strWhereGraph + v + ".graph = '" + strGraph + "' AND ";
+      }
+    }
+    strSelect = strSelect + "1 ";
+
+    // Complete PGQL query
+    strMatch = strSelect + "\nFROM MATCH " + strMatch + " ONE ROW PER STEP (path_src, path_edge, path_dst)\nWHERE " + strWhereGraph + strWhere;
+    System.out.println("INFO: Query is modified:" + strMatch);
+
+    // Run the PGQL query and get the result in PG-JSON
+    HashMap<String, Object> response = new HashMap<>();
     PgGraph pg = new PgGraph();
     try {
-      PgqlResultSet rs = pgxSession.queryPgql(strQuery);
-      result = "Nodes with ID [" + strIds + "] are retrieved.";
-      pg = getResultPG(rs, 1, 0);
+      PgqlResultSet rs = pgxGraph.queryPgql(strMatch);
+      pg = getResultPG(rs, cntNode, cntEdge);
+      rs.close();
+      response.put("request", ctx.fullUrl());
+      response.put("pg", pg);
     } catch (Exception e) {
-      result = printException(e);
+      response.put("error", printException(e));
     }
-    long timeEnd = System.nanoTime();
-    System.out.println("INFO: Execution time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms (" + result + ")");
-    ctx.result(result);
     ctx.contentType("application/json");
-    HashMap<String, Object> response = new HashMap<>();
-    response.put("request", ctx.fullUrl());
-    response.put("pg", pg);
     ctx.json(response);
+    long timeEnd = System.nanoTime();
+    System.out.println("INFO: Execution time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms (query)");
   };
 
-	private static PgGraph getResultPG(PgqlResultSet rs, int countNode, int countEdge) {
+  private static PgGraph getResultPG(PgqlResultSet rs, int cntNode, int cntEdge) {
 		PgGraph pg = new PgGraph();
 		try {
 			while (rs.next()) {
 
 				int lengthNode = 3; // ID + Label + JSON Props
-				int lengthEdge = 4; // ID + Src Node ID + Dst Node ID + Label + JSON Props
+				int lengthEdge = 4; // Src Node ID + Dst Node ID + Label + JSON Props
 
-				int offsetEdge = countNode * lengthNode; // Edge Offset
-				int offsetNodeList = offsetEdge + (countEdge * lengthEdge); // Node List Offset
+				int offsetEdge = cntNode * lengthNode; // Edge Offset
+				int offsetNodeList = offsetEdge + (cntEdge * lengthEdge); // Node List Offset
         
 				// Nodes
 				for (int i = 1; i <= offsetEdge; i = i + lengthNode) {
-					Object id = rs.getObject(i);
+					Object id = rs.getObject(i + 0);
           if (!pg.hasNodeId(id)) {
             String label = rs.getString(i + 1);
             String props = rs.getString(i + 2);
@@ -87,11 +106,11 @@ public class RetrievalControllerPgx {
 				}
 				// Edges
 				for (int i = offsetEdge + 1; i <= offsetNodeList; i = i + lengthEdge) {
-					String idSrc = rs.getString(i + 1);
-          String idDst = rs.getString(i + 2);
+					String idSrc = rs.getString(i + 0);
+          String idDst = rs.getString(i + 1);
           boolean undirected = false;
-          String label = rs.getString(i + 3);
-          String props = rs.getString(i + 4);
+          String label = rs.getString(i + 2);
+          String props = rs.getString(i + 3);
           PgEdge edge = new PgEdge(idSrc, idDst, undirected, label, props);
           pg.addEdge(edge);
 				}
@@ -101,4 +120,5 @@ public class RetrievalControllerPgx {
 		}
 		return pg;
 	}
+
 }
