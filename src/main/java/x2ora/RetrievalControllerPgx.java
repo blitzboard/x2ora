@@ -97,6 +97,9 @@ public class RetrievalControllerPgx {
 					Object id = rs.getObject(i + 0);
           if (!pg.hasNodeId(id)) {
             String label = rs.getString(i + 1);
+            if (label.equals("")) { // PGX returns "" for null
+              label = null;
+            }
             String props = rs.getString(i + 2);
             PgNode node = new PgNode(id, label, props);
             pg.addNode(node);
@@ -108,6 +111,9 @@ public class RetrievalControllerPgx {
           String idDst = rs.getString(i + 1);
           boolean undirected = false;
           String label = rs.getString(i + 2);
+          if (label.equals("")) { // PGX returns "" for null
+            label = null;
+          }
           String props = rs.getString(i + 3);
           PgEdge edge = new PgEdge(idSrc, idDst, undirected, label, props);
           pg.addEdge(edge);
