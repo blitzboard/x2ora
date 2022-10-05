@@ -167,40 +167,6 @@ public class UpdateController {
     return result;
   };
 
-  public static Handler addNode = ctx -> {
-    long timeStart = System.nanoTime();
-
-    String strGraph = ctx.formParam("graph");
-    String strId = ctx.formParam("id");
-    String strLabel = ctx.formParam("label");
-    String strProps = ctx.formParam("props");
-
-    String result = addNode(strGraph, strId, strLabel, strProps);
-    conn.commit();
-    long timeEnd = System.nanoTime();
-    System.out.println("INFO: Execution Time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms (" + result + ")");
-    ctx.result(result + "\n");
-  };
-
-  private static String addNode(String strGraph, String strId, String strLabel, String strProps) throws SQLException {
-    String result;
-    String query = "INSERT INTO " + strPgvNode + " VALUES (?, ?, ?, ?)";			
-    try (PreparedStatement ps = conn.prepareStatement(query)) {
-      ps.setString(1, strGraph);
-      ps.setString(2, strId);
-      ps.setString(3, strLabel.toUpperCase());
-      ps.setString(4, strProps);
-      ps.execute();
-      result = "Node " + strLabel.toUpperCase() + " " + strId + " is added.";  
-      ps.close();
-    } catch (Exception e) {
-      conn.rollback();
-      System.out.println("rollback");
-      throw e;
-    };
-    return result;
-  }
-
   public static Handler mergeNode = ctx -> {
     long timeStart = System.nanoTime();
 
