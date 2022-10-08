@@ -86,9 +86,9 @@ public class Main {
 		//app.post("/merge_graph/", UpdateController.mergeGraph);
 		app.post("/create/", UpdateController.create);
 		app.post("/drop/", UpdateController.drop);
-		app.get("/query/", RetrievalController.query);
+		app.get("/query/", RetrievalControllerPgv.query);
 		app.get("/query_path/", RetrievalControllerPgx.queryPath);
-		app.get("/query_table/", RetrievalController.queryTable);
+		app.get("/query_table/", RetrievalControllerPgv.queryTable);
 		app.get("/list/", RetrievalController.list);
 		app.get("/get/", RetrievalController.get);
 	}
