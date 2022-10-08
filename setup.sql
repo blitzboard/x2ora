@@ -1,4 +1,4 @@
--- SQL (CLOB and VARCHAR2)
+-- v1 tables (using CLOB and VARCHAR2)
 
 CREATE TABLE x2graph (
   id VARCHAR2(255)
@@ -31,7 +31,7 @@ CREATE TABLE x2edge (
 , CONSTRAINT x2edge_check CHECK (props IS JSON)
 );
 
--- SQL (BLOB)
+-- v1 tables (using BLOB)
 
 CREATE TABLE x2graph (
   id VARCHAR2(255)
@@ -64,12 +64,11 @@ CREATE TABLE x2edge (
 , CONSTRAINT x2edge_check CHECK (props IS JSON FORMAT OSON)
 );
 
-
 INSERT INTO x2node VALUES ('TEST', '1', 'PERSON', '{"AGE":[37]}');
 INSERT INTO x2node VALUES ('TEST', '2', 'PERSON', '{"AGE":[36]}');
 INSERT INTO x2edge VALUES ('TEST', '73da3dd7-2518-459a-9c36-c2104a95fc7f', '1', '2', 'KNOWS', '{"SINCE":[2017]}');
 
--- Graph model v1
+-- v1 pgv graph
 
 DROP PROPERTY GRAPH x2;
 
@@ -90,48 +89,30 @@ CREATE PROPERTY GRAPH x2
   )
   OPTIONS (PG_VIEW);
 
--- Graph model v2
+-- v1 pgx graph
 
-CREATE VIEW x2nodev AS
-SELECT
-  graph || ',' || id AS gid
-, graph
-, id
-, label
-, props
-FROM x2node;
+CREATE VIEW x2v2metanode AS
+SELECT id, MAX(label) AS label, MAX(props) AS props FROM x2node GROUP BY id;
 
-CREATE VIEW x2edgev AS
-SELECT
-  graph || ',' || id AS gid
-, graph
-, id
-, graph || ',' || src AS gsrc
-, graph || ',' || dst AS gdst
-, src
-, dst
-, label
-, props
-FROM x2edge;
+CREATE VIEW x2v2metaedge AS
+SELECT MAX(id) AS id, src, dst, label, MAX(props) AS props FROM x2edge GROUP BY src, dst, label;
 
-DROP PROPERTY GRAPH x2;
-
+statement = """
 CREATE PROPERTY GRAPH x2
   VERTEX TABLES (
-    x2nodev
-      KEY (gid)
+    x2v2metanode
+      KEY (id)
       LABEL node
-      PROPERTIES (graph, id, label, props)
+      PROPERTIES (id, label, props)
   )
   EDGE TABLES (
-    x2edgev
-      KEY (gid)
-      SOURCE KEY(gsrc) REFERENCES x2nodev
-      DESTINATION KEY(gdst) REFERENCES x2nodev
+    x2v2metaedge
+      KEY (id)
+      SOURCE KEY(src) REFERENCES x2v2metanode
+      DESTINATION KEY(dst) REFERENCES x2v2metanode
       LABEL edge
-      PROPERTIES (graph, id, src, dst, label, props)
+      PROPERTIES (id, label, src, dst, props)
   )
-  OPTIONS (PG_VIEW);
-
-select * from match (n1)-[e]->(n2) on x2 limit 5
+"""
+session.prepare_pgql(statement).execute()
 
