@@ -2,18 +2,25 @@ package x2ora;
 
 import io.javalin.http.Handler;
 
+import java.io.IOException;
 import java.util.HashMap;
+import java.util.ResourceBundle;
+import java.util.concurrent.ExecutionException;
 
 import static x2ora.Main.*;
 
+import oracle.pgx.api.GraphSource;
 import oracle.pgx.api.PgqlResultSet;
 import oracle.pgql.lang.PgqlException;
+import oracle.pg.rdbms.GraphServer;
 
 public class RetrievalControllerPgx {
 
   public static String countNodes() throws Exception {
+    getGraph();
     long timeStart = System.nanoTime();
     String result = "";
+    
     try {
       PgqlResultSet rs = pgxGraph.queryPgql("SELECT COUNT(v) FROM MATCH (v)");
       if (rs.first()){
@@ -23,9 +30,38 @@ public class RetrievalControllerPgx {
       result = printException(e);
     }
     long timeEnd = System.nanoTime();
-    System.out.println("INFO: Execution Time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms (" + result + ")");
+    System.out.println("INFO: Execution time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms (" + result + ")");
     return result;
   };
+
+  private static void getGraph() {
+    String result = "Get graph";
+    long timeStart = System.nanoTime();
+    ResourceBundle rb = ResourceBundle.getBundle("common");
+    String strPgxGraph = rb.getString("pgx_graph");
+    try {
+      pgxGraph = pgxSession.getGraph(strPgxGraph.toUpperCase());
+    } catch (Exception e) {
+      result = "Get graph with a new session";
+      try {
+        pgxInstance = GraphServer.getInstance(
+          rb.getString("base_url"),
+          rb.getString("username"),
+          rb.getString("password").toCharArray()
+        );
+        try {
+          pgxSession = pgxInstance.createSession("x2ora");
+          pgxGraph = pgxSession.readGraphByName(strPgxGraph.toUpperCase(), GraphSource.PG_VIEW);
+        } catch (ExecutionException | InterruptedException e2) {
+          e2.printStackTrace();
+        }
+      } catch (IOException e1) {
+        e1.printStackTrace();
+      }
+    }
+    long timeEnd = System.nanoTime();
+    System.out.println("INFO: Execution time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms (" + result + ")");
+  }
 
   public static Handler queryPath = ctx -> {
     long timeStart = System.nanoTime();
@@ -62,6 +98,8 @@ public class RetrievalControllerPgx {
     // Complete PGQL query
     strMatch = strSelect + "\nFROM MATCH " + strMatch + " ONE ROW PER STEP (path_src, path_edge, path_dst)\nWHERE " + strWhereGraph + strWhere;
     System.out.println("INFO: Query is modified:" + strMatch);
+
+    getGraph();
 
     // Run the PGQL query and get the result in PG-JSON
     HashMap<String, Object> response = new HashMap<>();

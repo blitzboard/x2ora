@@ -24,6 +24,7 @@ public class Main {
 
 	public static Connection conn;
 	public static PgqlConnection pgqlConn;
+	public static ServerInstance pgxInstance;
 	public static PgxSession pgxSession;
 	public static PgxGraph pgxGraph;
 	public static String strPgv;
@@ -52,14 +53,14 @@ public class Main {
 		ResourceBundle rb = ResourceBundle.getBundle("common");
 
 		// Connection for PGX
-		ServerInstance instance = GraphServer.getInstance(
+		ServerInstance pgxInstance = GraphServer.getInstance(
 			rb.getString("base_url"),
 			rb.getString("username"),
 			rb.getString("password").toCharArray()
 		);
-		pgxSession = instance.createSession("x2ora");
-		strPgv = rb.getString("pgview");
-		pgxGraph = pgxSession.getGraph(strPgv.toUpperCase());
+		pgxSession = pgxInstance.createSession("x2ora");
+		String strPgxGraph = rb.getString("pgx_graph");
+		pgxGraph = pgxSession.readGraphByName(strPgxGraph.toUpperCase(), GraphSource.PG_VIEW);
 		
 	  // Connection for PGV
 		PoolDataSource pds = PoolDataSourceFactory.getPoolDataSource();
