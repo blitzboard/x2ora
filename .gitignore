@@ -19,3 +19,6 @@ x2oracle.code-workspace
 
 # Ignore Properties
 src/main/resources/common.properties
+
+# Ignore PID
+x2ora.pid
