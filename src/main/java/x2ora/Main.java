@@ -68,6 +68,8 @@ public class Main {
 		pds.setURL(rb.getString("jdbc_url"));
 		pds.setUser(rb.getString("username"));
 		pds.setPassword(rb.getString("password"));
+		pds.setInitialPoolSize(2);
+		pds.setMinPoolSize(2);
 		conn = pds.getConnection();
 		conn.setAutoCommit(false);
 		pgqlConn = PgqlConnection.getConnection(conn);
