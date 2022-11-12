@@ -88,6 +88,7 @@ public class Main {
 		app.post("/merge_edge/", UpdateController.mergeEdge);
 		//app.post("/merge_graph/", UpdateController.mergeGraph);
 		app.post("/create/", UpdateController.create);
+		app.post("/update/", UpdateController.update);
 		app.post("/drop/", UpdateController.drop);
 		app.get("/query/", RetrievalControllerPgv.query);
 		app.get("/query_path/", RetrievalControllerPgx.queryPath);

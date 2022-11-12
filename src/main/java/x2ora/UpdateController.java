@@ -12,6 +12,25 @@ import java.util.UUID;
 
 public class UpdateController {
 
+  public static Handler update = ctx -> {
+    long timeStart = System.nanoTime();
+
+    PgGraphNamed pgn = ctx.bodyAsClass(PgGraphNamed.class);
+    String strGraph = pgn.getName();
+    String strGraphProps = pgn.getPropertiesJSON();
+    PgGraph pg = pgn.getPg();
+
+    System.out.println("INFO: Graph received (" + pg.countNodes() + " nodes, " + pg.countEdges() + " edges).");
+    if (exists(strGraph)) {
+      drop(strGraph);
+    }
+    create(pg, strGraph, strGraphProps);
+
+    long timeEnd = System.nanoTime();
+    System.out.println("INFO: Execution Time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms");
+    ctx.result(strGraph + " is updated.");
+  };
+
   public static Handler create = ctx -> {
     long timeStart = System.nanoTime();
     String result = "";
@@ -25,65 +44,12 @@ public class UpdateController {
       result = "Graph " + strGraph + " exists.\n";
     } else {
       System.out.println("INFO: Graph received (" + pg.countNodes() + " nodes, " + pg.countEdges() + " edges).");
-      String query = "";
-
-      query = "INSERT INTO " + strPgvGraph + " VALUES (?, ?)";
-      PreparedStatement ps = conn.prepareStatement(query);
-      try {
-        ps.setString(1, strGraph);
-        ps.setString(2, strGraphProps);
-        ps.execute();
-      } catch (Exception e) {
-        conn.rollback();
-        System.out.println("rollback");
-        result = printException(e);
-        throw e;
-      };
-      ps.close();
-
-      query = "INSERT INTO " + strPgvNode + " VALUES (?, ?, ?, ?)";
-      ps = conn.prepareStatement(query);
-      for (PgNode node : pg.getNodes()) {
-        try {
-          ps.setString(1, strGraph);
-          ps.setString(2, (String)node.getId());
-          ps.setString(3, node.getLabel());
-          ps.setString(4, node.getPropertiesJSON());
-          ps.execute();
-        } catch (Exception e) {
-          conn.rollback();
-          System.out.println("rollback");
-          result = printException(e);
-          throw e;
-        };
-      }
-      ps.close();
-
-      query = "INSERT INTO " + strPgvEdge + " VALUES (?, ?, ?, ?, ?, ?)";
-      ps = conn.prepareStatement(query);
-      for (PgEdge edge : pg.getEdges()) {
-        try {
-          ps.setString(1, strGraph);
-          ps.setString(2, UUID.randomUUID().toString());
-          ps.setString(3, (String)edge.getFrom());
-          ps.setString(4, (String)edge.getTo());
-          ps.setString(5, edge.getLabel());
-          ps.setString(6, edge.getPropertiesJSON());
-          ps.execute();
-        } catch (Exception e) {
-          conn.rollback();
-          System.out.println("rollback");
-          result = result + printException(e);
-          throw e;
-        };
-      }
-      ps.close();
-
-      conn.commit();
-      result = strGraph + " is created.\n";
+      create(pg, strGraph, strGraphProps);
     }
+
     long timeEnd = System.nanoTime();
     System.out.println("INFO: Execution Time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms");
+    System.out.println("INFO: " + result);
     ctx.result(result);
   };
 
@@ -95,52 +61,120 @@ public class UpdateController {
     if (!exists(strGraph)) {
       result = strGraph + " does not exist.\n";
     } else {
-      String query = "";
-
-      query = "DELETE FROM " + strPgvEdge + " WHERE graph = ?";
-      try (PreparedStatement ps = conn.prepareStatement(query)) {
-        ps.setString(1, strGraph);
-        ps.execute();
-        ps.close();
-        result = result + "All edges in " + strGraph + " is deleted.\n";
-      } catch (Exception e) {
-        conn.rollback();
-        System.out.println("INFO: rollback");
-        result = printException(e);
-        throw e;
-      };
-
-      query = "DELETE FROM " + strPgvNode + " WHERE graph = ?";
-      try (PreparedStatement ps = conn.prepareStatement(query)) {
-        ps.setString(1, strGraph);
-        ps.execute();
-        ps.close();
-        result = result + "All nodes in " + strGraph + " is deleted.\n";
-      } catch (Exception e) {
-        conn.rollback();
-        System.out.println("INFO: rollback");
-        result = printException(e);
-        throw e;
-      };
-
-      query = "DELETE FROM " + strPgvGraph + " WHERE id = ?";
-      try (PreparedStatement ps = conn.prepareStatement(query)) {
-        ps.setString(1, strGraph);
-        ps.execute();
-        ps.close();
-        result = result + "Graph " + strGraph + " is deleted.\n";
-      } catch (Exception e) {
-        conn.rollback();
-        System.out.println("INFO: rollback");
-        result = printException(e);
-        throw e;
-      };
-
-      conn.commit();
+      drop(strGraph);
     }
     long timeEnd = System.nanoTime();
     System.out.println("INFO: Execution Time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms");
     ctx.result(result);
+  };
+
+  private static String create(PgGraph pg, String strGraph, String strGraphProps) throws Exception {
+    String result = "";
+    String query = "";
+    PreparedStatement ps;
+
+    query = "INSERT INTO " + strPgvGraph + " VALUES (?, ?)";
+    ps = conn.prepareStatement(query);
+    try {
+      ps.setString(1, strGraph);
+      ps.setString(2, strGraphProps);
+      ps.execute();
+    } catch (Exception e) {
+      conn.rollback();
+      System.out.println("rollback");
+      result = printException(e);
+      throw e;
+    };
+    ps.close();
+
+    query = "INSERT INTO " + strPgvNode + " VALUES (?, ?, ?, ?)";
+    ps = conn.prepareStatement(query);
+    for (PgNode node : pg.getNodes()) {
+      try {
+        ps.setString(1, strGraph);
+        ps.setString(2, (String)node.getId());
+        ps.setString(3, node.getLabel());
+        ps.setString(4, node.getPropertiesJSON());
+        ps.execute();
+      } catch (Exception e) {
+        conn.rollback();
+        System.out.println("rollback");
+        result = printException(e);
+        throw e;
+      };
+    }
+    ps.close();
+
+    query = "INSERT INTO " + strPgvEdge + " VALUES (?, ?, ?, ?, ?, ?)";
+    ps = conn.prepareStatement(query);
+    for (PgEdge edge : pg.getEdges()) {
+      try {
+        ps.setString(1, strGraph);
+        ps.setString(2, UUID.randomUUID().toString());
+        ps.setString(3, (String)edge.getFrom());
+        ps.setString(4, (String)edge.getTo());
+        ps.setString(5, edge.getLabel());
+        ps.setString(6, edge.getPropertiesJSON());
+        ps.execute();
+      } catch (Exception e) {
+        conn.rollback();
+        System.out.println("rollback");
+        result = result + printException(e);
+        throw e;
+      };
+    }
+    ps.close();
+
+    conn.commit();
+    result = strGraph + " is created.\n";
+    return result;
+  };
+
+  private static String drop(String strGraph) throws Exception {
+    String result = "";
+    String query = "";
+
+    query = "DELETE FROM " + strPgvEdge + " WHERE graph = ?";
+    try (PreparedStatement ps = conn.prepareStatement(query)) {
+      ps.setString(1, strGraph);
+      ps.execute();
+      ps.close();
+      result = result + "All edges in " + strGraph + " is deleted.\n";
+    } catch (Exception e) {
+      conn.rollback();
+      System.out.println("INFO: rollback");
+      result = printException(e);
+      throw e;
+    };
+
+    query = "DELETE FROM " + strPgvNode + " WHERE graph = ?";
+    try (PreparedStatement ps = conn.prepareStatement(query)) {
+      ps.setString(1, strGraph);
+      ps.execute();
+      ps.close();
+      result = result + "All nodes in " + strGraph + " is deleted.\n";
+    } catch (Exception e) {
+      conn.rollback();
+      System.out.println("INFO: rollback");
+      result = printException(e);
+      throw e;
+    };
+
+    query = "DELETE FROM " + strPgvGraph + " WHERE id = ?";
+    try (PreparedStatement ps = conn.prepareStatement(query)) {
+      ps.setString(1, strGraph);
+      ps.execute();
+      ps.close();
+      result = result + "Graph " + strGraph + " is deleted.\n";
+    } catch (Exception e) {
+      conn.rollback();
+      System.out.println("INFO: rollback");
+      result = printException(e);
+      throw e;
+    };
+
+    conn.commit();
+    return result;
   };
 
   private static Boolean exists(String strGraph) throws SQLException {
