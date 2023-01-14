@@ -39,6 +39,7 @@ public class Main {
 
 		Javalin app = Javalin.create(config -> {
 			config.enableCorsForAllOrigins();
+			config.maxRequestSize = 100_000_000L;
 			config.server(() -> {
 				Server server = new Server();
 				ServerConnector connector = new ServerConnector(server);
@@ -90,6 +91,7 @@ public class Main {
 		app.post("/create/", UpdateController.create);
 		app.post("/update/", UpdateController.update);
 		app.post("/drop/", UpdateController.drop);
+		app.post("/rename/", UpdateController.rename);
 		app.get("/query/", RetrievalControllerPgv.query);
 		app.get("/query_path/", RetrievalControllerPgx.queryPath);
 		app.get("/query_table/", RetrievalControllerPgv.queryTable);
