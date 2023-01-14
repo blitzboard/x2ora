@@ -92,10 +92,22 @@ CREATE PROPERTY GRAPH x2
 -- v1 pgx graph
 
 CREATE VIEW x2metanode AS
-SELECT id, MAX(label) AS label, MAX(props) AS props FROM x2node GROUP BY id;
+SELECT
+  id
+, MAX(label) AS label
+, MAX(props) AS props
+FROM x2node
+GROUP BY id;
 
 CREATE VIEW x2metaedge AS
-SELECT MAX(id) AS id, src, dst, label, MAX(props) AS props FROM x2edge GROUP BY src, dst, label;
+SELECT
+  MAX(id) AS id
+, src
+, dst
+, label
+, MAX(props) AS props
+FROM x2edge
+GROUP BY src, dst, label;
 
 CREATE PROPERTY GRAPH x2meta
   VERTEX TABLES (

@@ -61,12 +61,30 @@ public class UpdateController {
     if (!exists(strGraph)) {
       result = strGraph + " does not exist.\n";
     } else {
-      drop(strGraph);
+      result = drop(strGraph);
     }
     long timeEnd = System.nanoTime();
     System.out.println("INFO: Execution Time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms");
     ctx.result(result);
   };
+  
+  /*
+  public static Handler rename = ctx -> {
+    long timeStart = System.nanoTime();
+    String strGraphFrom = ctx.formParam("graph_from");
+    String strGraphTo = ctx.formParam("graph_to");
+    String result = "";
+
+    if (!exists(strGraphFrom)) {
+      result = strGraphFrom + " does not exist.\n";
+    } else {
+      result = rename(strGraphFrom, strGraphTo);
+    }
+    long timeEnd = System.nanoTime();
+    System.out.println("INFO: Execution Time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms");
+    ctx.result(result);
+  };
+  */
 
   private static String create(PgGraph pg, String strGraph, String strGraphProps) throws Exception {
     String result = "";
@@ -166,6 +184,28 @@ public class UpdateController {
       ps.execute();
       ps.close();
       result = result + "Graph " + strGraph + " is deleted.\n";
+    } catch (Exception e) {
+      conn.rollback();
+      System.out.println("INFO: rollback");
+      result = printException(e);
+      throw e;
+    };
+
+    conn.commit();
+    return result;
+  };
+
+  private static String rename(String strGraphFrom, String strGraphTo) throws Exception {
+    String result = "";
+    String query = "";
+
+    query = "UPDATE " + strPgvGraph + " SET id = ? WHERE id = ?";
+    try (PreparedStatement ps = conn.prepareStatement(query)) {
+      ps.setString(1, strGraphTo);
+      ps.setString(2, strGraphFrom);
+      ps.execute();
+      ps.close();
+      result = result + "Graph " + strGraphFrom + " is renamed to " + strGraphTo + ".\n";
     } catch (Exception e) {
       conn.rollback();
       System.out.println("INFO: rollback");
