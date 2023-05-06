@@ -40,18 +40,22 @@ public class RetrievalController {
 
   public static Handler list = ctx -> {
     long timeStart = System.nanoTime();
-    LinkedList<String> response = new LinkedList<String>();
+    LinkedList<HashMap<String, String>> response = new LinkedList<HashMap<String, String>>();
+    HashMap<String, String> item = new HashMap<String, String>();
     try {
-      String query = "SELECT id FROM " + strPgvGraph;
+      String query = "SELECT id, JSON_VALUE(props, '$.name[0]') AS name FROM " + strPgvGraph;
       PreparedStatement ps = conn.prepareStatement(query);
       ResultSet rs = ps.executeQuery();
       while (rs.next()) {
-        response.add(rs.getString("id"));
+        item.put("id", rs.getString("id"));
+        item.put("name", rs.getString("name"));
+        response.add(item);
       }
       rs.close();
       ps.close();
     } catch (SQLException e) {
-      response.add(printException(e));
+      item.put("error", printException(e));
+      response.add(item);
     }
     ctx.contentType("application/json");
     ctx.json(response);
