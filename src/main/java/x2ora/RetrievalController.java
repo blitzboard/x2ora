@@ -41,12 +41,12 @@ public class RetrievalController {
   public static Handler list = ctx -> {
     long timeStart = System.nanoTime();
     LinkedList<HashMap<String, String>> response = new LinkedList<HashMap<String, String>>();
-    HashMap<String, String> item = new HashMap<String, String>();
     try {
       String query = "SELECT id, JSON_VALUE(props, '$.name[0]') AS name FROM " + strPgvGraph;
       PreparedStatement ps = conn.prepareStatement(query);
       ResultSet rs = ps.executeQuery();
       while (rs.next()) {
+        HashMap<String, String> item = new HashMap<String, String>();
         item.put("id", rs.getString("id"));
         item.put("name", rs.getString("name"));
         response.add(item);
@@ -54,6 +54,7 @@ public class RetrievalController {
       rs.close();
       ps.close();
     } catch (SQLException e) {
+      HashMap<String, String> item = new HashMap<String, String>();
       item.put("error", printException(e));
       response.add(item);
     }
