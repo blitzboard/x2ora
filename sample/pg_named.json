@@ -1,5 +1,6 @@
 {
-  "name": "test1",
+  "id": "e730fec3-680b-444a-8fec-0b801f5991db", 
+  "properties": {"pg": ["aaa"], "config": ["bbb"], "name": ["test1"]},
   "pg": {
     "nodes": [
       {

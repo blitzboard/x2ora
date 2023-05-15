@@ -38,7 +38,7 @@ dependencies {
     implementation group: 'org.json', name: 'json', version: '20220320'
     
     // Oracle Graph Client
-    implementation fileTree(dir: './oracle-graph-client-22.3.0/lib/', include: '*.jar', exclude: 'ons-19.12.0.0.jar')
+    implementation fileTree(dir: './oracle-graph-client-23.2.0/lib/', include: '*.jar', exclude: 'ons-19.12.0.0.jar')
     // implementation fileTree(dir: '/opt/oracle/graph/client/lib/', include: '*.jar', exclude: 'ons-19.12.12.0.0.jar')
 }
 

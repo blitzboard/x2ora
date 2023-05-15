@@ -9,21 +9,21 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class PgGraphNamed {
 
-  private String name;
+  private String id;
   private PgGraph pg = new PgGraph();
   private HashMap<String, List<Object>> properties = new HashMap<>();
 
   public PgGraphNamed() {
   }
 
-  public PgGraphNamed(String name, PgGraph pg, String properties) {
-    this.name = name;
+  public PgGraphNamed(String id, PgGraph pg, String properties) {
+    this.id = id;
     this.pg = pg;
     this.addProperties(properties);
   }
   
-  public String getName() {
-    return name;
+  public String getId() {
+    return id;
   }
   public HashMap<String, List<Object>> getProperties() {
     return properties;
@@ -32,8 +32,8 @@ public class PgGraphNamed {
     return pg;
   }
 
-  public void setName(String name) {
-    this.name = name;
+  public void setId(String id) {
+    this.id = id;
   }
   public void setPg(PgGraph pg) {
     this.pg = pg;

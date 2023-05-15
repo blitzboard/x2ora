@@ -7,86 +7,98 @@ import static x2ora.Main.*;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-
+import java.util.HashMap;
 import java.util.UUID;
 
 public class UpdateController {
 
   public static Handler update = ctx -> {
     long timeStart = System.nanoTime();
-
     PgGraphNamed pgn = ctx.bodyAsClass(PgGraphNamed.class);
-    String strGraph = pgn.getName();
+    String strGraphId = pgn.getId();
     String strGraphProps = pgn.getPropertiesJSON();
     PgGraph pg = pgn.getPg();
-
     System.out.println("INFO: Graph received (" + pg.countNodes() + " nodes, " + pg.countEdges() + " edges).");
-    if (exists(strGraph)) {
-      drop(strGraph);
+
+    HashMap<String, String> response = new HashMap<>();
+    if (exists(strGraphId)) {
+      drop(strGraphId);
+      create(pg, strGraphId, strGraphProps);
+      response.put("status", "success");
+    } else {
+      response.put("status", "not exist");
     }
-    create(pg, strGraph, strGraphProps);
 
     long timeEnd = System.nanoTime();
     System.out.println("INFO: Execution Time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms");
-    ctx.result(strGraph + " is updated.");
+    response.put("request", "update");
+    response.put("graphId", strGraphId);
+    ctx.json(response);
   };
 
   public static Handler create = ctx -> {
     long timeStart = System.nanoTime();
-    String result = "";
-
     PgGraphNamed pgn = ctx.bodyAsClass(PgGraphNamed.class);
-    String strGraph = pgn.getName();
+    String strGraphId = UUID.randomUUID().toString();
     String strGraphProps = pgn.getPropertiesJSON();
     PgGraph pg = pgn.getPg();
+    System.out.println("INFO: Graph received (" + pg.countNodes() + " nodes, " + pg.countEdges() + " edges).");
 
-    if (exists(strGraph)) {
-      result = "Graph " + strGraph + " exists.\n";
+    HashMap<String, String> response = new HashMap<>();
+    if (exists(strGraphId)) {
+      response.put("status", "already exists");
     } else {
-      System.out.println("INFO: Graph received (" + pg.countNodes() + " nodes, " + pg.countEdges() + " edges).");
-      create(pg, strGraph, strGraphProps);
+      create(pg, strGraphId, strGraphProps);
+      response.put("status", "success");
     }
 
     long timeEnd = System.nanoTime();
     System.out.println("INFO: Execution Time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms");
-    System.out.println("INFO: " + result);
-    ctx.result(result);
+    response.put("request", "create");
+    response.put("graphId", strGraphId);
+    ctx.json(response);
   };
 
   public static Handler drop = ctx -> {
     long timeStart = System.nanoTime();
-    String strGraph = ctx.formParam("graph");
-    String result = "";
+    String strGraphId = ctx.formParam("graph");
 
-    if (!exists(strGraph)) {
-      result = strGraph + " does not exist.\n";
+    HashMap<String, String> response = new HashMap<>();
+    if (exists(strGraphId)) {
+      drop(strGraphId);
+      response.put("status", "success");
     } else {
-      result = drop(strGraph);
+      response.put("status", "not exist");
     }
+    
     long timeEnd = System.nanoTime();
     System.out.println("INFO: Execution Time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms");
-    ctx.result(result);
+    response.put("request", "drop");
+    response.put("graphId", strGraphId);
+    ctx.json(response);
   };
   
-  /*
   public static Handler rename = ctx -> {
     long timeStart = System.nanoTime();
-    String strGraphFrom = ctx.formParam("graph_from");
-    String strGraphTo = ctx.formParam("graph_to");
-    String result = "";
+    String strId = ctx.formParam("graph");
+    String strName = ctx.formParam("name");
 
-    if (!exists(strGraphFrom)) {
-      result = strGraphFrom + " does not exist.\n";
+    HashMap<String, String> response = new HashMap<>();
+    if (exists(strId)) {
+      rename(strId, strName);
+      response.put("status", "success");
     } else {
-      result = rename(strGraphFrom, strGraphTo);
+      response.put("status", "not exist");
     }
+
     long timeEnd = System.nanoTime();
     System.out.println("INFO: Execution Time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms");
-    ctx.result(result);
+    response.put("request", "rename");
+    response.put("graphId", strId);
+    ctx.json(response);
   };
-  */
 
-  private static String create(PgGraph pg, String strGraph, String strGraphProps) throws Exception {
+  private static String create(PgGraph pg, String strGraphId, String strGraphProps) throws Exception {
     String result = "";
     String query = "";
     PreparedStatement ps;
@@ -94,7 +106,7 @@ public class UpdateController {
     query = "INSERT INTO " + strPgvGraph + " VALUES (?, ?)";
     ps = conn.prepareStatement(query);
     try {
-      ps.setString(1, strGraph);
+      ps.setString(1, strGraphId);
       ps.setString(2, strGraphProps);
       ps.execute();
     } catch (Exception e) {
@@ -109,7 +121,7 @@ public class UpdateController {
     ps = conn.prepareStatement(query);
     for (PgNode node : pg.getNodes()) {
       try {
-        ps.setString(1, strGraph);
+        ps.setString(1, strGraphId);
         ps.setString(2, (String)node.getId());
         ps.setString(3, node.getLabel());
         ps.setString(4, node.getPropertiesJSON());
@@ -127,7 +139,7 @@ public class UpdateController {
     ps = conn.prepareStatement(query);
     for (PgEdge edge : pg.getEdges()) {
       try {
-        ps.setString(1, strGraph);
+        ps.setString(1, strGraphId);
         ps.setString(2, UUID.randomUUID().toString());
         ps.setString(3, (String)edge.getFrom());
         ps.setString(4, (String)edge.getTo());
@@ -144,20 +156,20 @@ public class UpdateController {
     ps.close();
 
     conn.commit();
-    result = strGraph + " is created.\n";
+    result = strGraphId + " is created.\n";
     return result;
   };
 
-  private static String drop(String strGraph) throws Exception {
+  private static String drop(String strGraphId) throws Exception {
     String result = "";
     String query = "";
 
     query = "DELETE FROM " + strPgvEdge + " WHERE graph = ?";
     try (PreparedStatement ps = conn.prepareStatement(query)) {
-      ps.setString(1, strGraph);
+      ps.setString(1, strGraphId);
       ps.execute();
       ps.close();
-      result = result + "All edges in " + strGraph + " is deleted.\n";
+      result = result + "All edges in " + strGraphId + " is deleted.\n";
     } catch (Exception e) {
       conn.rollback();
       System.out.println("INFO: rollback");
@@ -167,10 +179,10 @@ public class UpdateController {
 
     query = "DELETE FROM " + strPgvNode + " WHERE graph = ?";
     try (PreparedStatement ps = conn.prepareStatement(query)) {
-      ps.setString(1, strGraph);
+      ps.setString(1, strGraphId);
       ps.execute();
       ps.close();
-      result = result + "All nodes in " + strGraph + " is deleted.\n";
+      result = result + "All nodes in " + strGraphId + " is deleted.\n";
     } catch (Exception e) {
       conn.rollback();
       System.out.println("INFO: rollback");
@@ -180,10 +192,10 @@ public class UpdateController {
 
     query = "DELETE FROM " + strPgvGraph + " WHERE id = ?";
     try (PreparedStatement ps = conn.prepareStatement(query)) {
-      ps.setString(1, strGraph);
+      ps.setString(1, strGraphId);
       ps.execute();
       ps.close();
-      result = result + "Graph " + strGraph + " is deleted.\n";
+      result = result + "Graph " + strGraphId + " is deleted.\n";
     } catch (Exception e) {
       conn.rollback();
       System.out.println("INFO: rollback");
@@ -195,17 +207,18 @@ public class UpdateController {
     return result;
   };
 
-  private static String rename(String strGraphFrom, String strGraphTo) throws Exception {
+  private static String rename(String strId, String strName) throws Exception {
     String result = "";
     String query = "";
 
-    query = "UPDATE " + strPgvGraph + " SET id = ? WHERE id = ?";
+    query = "UPDATE " + strPgvGraph + " SET props = JSON_TRANSFORM(props, SET '$.name[0]' = ?) WHERE id = ?";
     try (PreparedStatement ps = conn.prepareStatement(query)) {
-      ps.setString(1, strGraphTo);
-      ps.setString(2, strGraphFrom);
+      ps.setString(1, strName);
+      ps.setString(2, strId);
+      System.out.println("INFO: " + query + " (" + strName + ", " + strId + ")");
       ps.execute();
       ps.close();
-      result = result + "Graph " + strGraphFrom + " is renamed to " + strGraphTo + ".\n";
+      result = result + "Graph " + strId + " is renamed to " + strName + ".\n";
     } catch (Exception e) {
       conn.rollback();
       System.out.println("INFO: rollback");
@@ -217,16 +230,15 @@ public class UpdateController {
     return result;
   };
 
-  private static Boolean exists(String strGraph) throws SQLException {
+  private static Boolean exists(String strGraphId) throws SQLException {
     Boolean result = false;
     try {
-      String query = "SELECT id FROM " + strPgvGraph + " WHERE id = '" + strGraph + "' FETCH FIRST 1 ROWS ONLY";
+      String query = "SELECT id FROM " + strPgvGraph + " WHERE id = '" + strGraphId + "' FETCH FIRST 1 ROWS ONLY";
       PreparedStatement ps = conn.prepareStatement(query);
       ResultSet rs = ps.executeQuery();
-      System.out.println(query);
+      System.out.println("INFO: " + query);
       if (rs.next()) {
         result = true;
-        System.out.println(result);
       }
       rs.close();
       ps.close();
@@ -271,7 +283,7 @@ public class UpdateController {
     long timeStart = System.nanoTime();
     
     PgGraphNamed pgn = ctx.bodyAsClass(PgGraphNamed.class);
-    String strGraph = pgn.getName();
+    String strGraph = pgn.getId();
     PgGraph pg = pgn.getPg();
 
     System.out.println("INFO: Graph received (" + pg.countNodes() + " nodes, " + pg.countEdges() + " edges).");

@@ -91,7 +91,7 @@ public class Main {
 		app.post("/create/", UpdateController.create);
 		app.post("/update/", UpdateController.update);
 		app.post("/drop/", UpdateController.drop);
-		//app.post("/rename/", UpdateController.rename);
+		app.post("/rename/", UpdateController.rename);
 		app.get("/query/", RetrievalControllerPgv.query);
 		app.get("/query_path/", RetrievalControllerPgx.queryPath);
 		app.get("/query_table/", RetrievalControllerPgv.queryTable);

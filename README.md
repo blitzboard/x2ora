@@ -28,18 +28,17 @@ Update requests.
 
 ```
 curl -XPOST -H 'Content-Type: application/json' -d @sample/pg_named.json 'http://localhost:7000/create/'
-curl -XPOST -d 'graph=test1' http://localhost:7000/drop
-curl -XPOST -d 'graph=graph1&label=person&id=Taro&props={"age":[37]}' http://localhost:7000/merge_node
-curl -XPOST -d 'graph=graph1&label=person&id=Jiro&props={"age":[36]}' http://localhost:7000/merge_node
-curl -XPOST -d 'graph=graph1&label=knows&src_id=Taro&dst_id=Jiro&props={"since":[2017]}' http://localhost:7000/merge_edge
+curl -XPOST -H 'Content-Type: application/json' -d @sample/pg_named.json 'http://localhost:7000/update/'
+curl -XPOST -d 'graph=e730fec3-680b-444a-8fec-0b801f5991db' -d 'name=test2' http://localhost:7000/rename
+curl -XPOST -d 'graph=e730fec3-680b-444a-8fec-0b801f5991db' http://localhost:7000/drop
 ```
 
 Retrieval requests.
 
 ```
 curl -G 'http://localhost:7000/list/'
-curl -G 'http://localhost:7000/get/' -d 'graph=test1'
-curl -G 'http://localhost:7000/query/' -d 'graph=test1' --data-urlencode 'match=MATCH (n1)-[e]->(n2)' --data-urlencode "where=n1.id='a'"
-curl -G 'http://localhost:7000/query_path/' -d 'graph=test1' --data-urlencode 'match=ANY (n1)->+(n2)' --data-urlencode "where=n1.id='a'"
+curl -G 'http://localhost:7000/get/' -d 'graph=e730fec3-680b-444a-8fec-0b801f5991db'
+curl -G 'http://localhost:7000/query/' -d 'graph=e730fec3-680b-444a-8fec-0b801f5991db' --data-urlencode 'match=(n1)-[e]->(n2)' --data-urlencode "where=1=1"
+curl -G 'http://localhost:7000/query_path/' -d 'graph=e730fec3-680b-444a-8fec-0b801f5991db' --data-urlencode 'match=ANY (n1)->+(n2)' --data-urlencode "where=1=1"
 curl -G 'http://localhost:7000/query_table/' --data-urlencode 'query=SELECT v.id, COUNT(*) AS cnt FROM MATCH (v) GROUP BY v.id ORDER BY cnt DESC'
 ```
