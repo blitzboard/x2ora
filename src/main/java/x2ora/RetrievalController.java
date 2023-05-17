@@ -34,15 +34,17 @@ public class RetrievalController {
       result = printException(e);
     }
     long timeEnd = System.nanoTime();
-    System.out.println("INFO: Execution Time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms (" + result + ")");
+    logger.info("Execution Time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms (" + result + ")");
     return result;
   };
 
   public static Handler list = ctx -> {
+    logger.info("/list");
     long timeStart = System.nanoTime();
     LinkedList<HashMap<String, String>> response = new LinkedList<HashMap<String, String>>();
     try {
       String query = "SELECT id, JSON_VALUE(props, '$.name[0]') AS name FROM " + strPgvGraph;
+      logger.info(query);
       PreparedStatement ps = conn.prepareStatement(query);
       ResultSet rs = ps.executeQuery();
       while (rs.next()) {
@@ -57,14 +59,16 @@ public class RetrievalController {
       HashMap<String, String> item = new HashMap<String, String>();
       item.put("error", printException(e));
       response.add(item);
+      logger.info("error", e);
     }
     ctx.contentType("application/json");
     ctx.json(response);
     long timeEnd = System.nanoTime();
-    System.out.println("INFO: Execution Time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms (list)");
+    logger.info("Execution Time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms");
   };
 
   public static Handler get = ctx -> {
+    logger.info("/get");
     long timeStart = System.nanoTime();
     String strGraph = ctx.queryParam("graph");
     String strResponse = ctx.queryParam("response");
@@ -77,13 +81,14 @@ public class RetrievalController {
     ctx.contentType("application/json");
     ctx.json(response);
     long timeEnd = System.nanoTime();
-    System.out.println("INFO: Execution Time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms ( get/ )");
+    logger.info("Execution Time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms");
   };
 
   private static HashMap<String, Object> getProperties(String strGraph) {
     HashMap<String, Object> response = new HashMap<>();
     try {
       String query = "SELECT props FROM " + strPgvGraph + " WHERE id = ?";
+      logger.info(query + " [" + strGraph + "]");
       PreparedStatement ps = conn.prepareStatement(query);
       ps.setString(1, strGraph);
       ResultSet rs = ps.executeQuery();
@@ -101,6 +106,7 @@ public class RetrievalController {
       ps.close();
     } catch (SQLException | JsonProcessingException e) {
       response.put("error", printException(e));
+      logger.info("error", e);
     }
     return response;
   };
@@ -111,6 +117,7 @@ public class RetrievalController {
     try {
       // Nodes
       String query = "SELECT * FROM " + strPgvNode + " WHERE graph = ?";
+      logger.info(query + " [" + strGraph + "]");
       PreparedStatement ps = conn.prepareStatement(query);
       ps.setString(1, strGraph);
       ResultSet rs = ps.executeQuery();
@@ -123,6 +130,7 @@ public class RetrievalController {
       }
       // Edges
       query = "SELECT * FROM " + strPgvEdge + " WHERE graph = ?";
+      logger.info(query + " [" + strGraph + "]");
       ps = conn.prepareStatement(query);
       ps.setString(1, strGraph);
       rs = ps.executeQuery();
@@ -141,6 +149,7 @@ public class RetrievalController {
       response.put("pg", pg);
     } catch (SQLException e) {
       response.put("error", printException(e));
+      logger.info("error", e);
     }
     return response;
   };

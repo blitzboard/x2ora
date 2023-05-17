@@ -23,7 +23,7 @@ public class RetrievalControllerPgv {
     String strGraph = ctx.queryParam("graph");
     String strMatch = ctx.queryParam("match");
     String strWhere = ctx.queryParam("where");
-    System.out.println("INFO: A request is received: " + strMatch);
+    logger.info("A request is received: " + strMatch);
 
     // SELECT and WHERE
     String strSelect = "\nSELECT ";
@@ -55,7 +55,7 @@ public class RetrievalControllerPgv {
 
     // Complete PGQL query
     strMatch = strSelect + "\nFROM MATCH " + strMatch + "\nWHERE " + strWhereGraph + strWhere;
-    System.out.println("INFO: Query is modified:" + strMatch);
+    logger.info("Query is modified:" + strMatch);
 
     // Run the PGQL query and get the result in PG-JSON
     HashMap<String, Object> response = new HashMap<>();
@@ -75,14 +75,14 @@ public class RetrievalControllerPgv {
     ctx.contentType("application/json");
     ctx.json(response);
     long timeEnd = System.nanoTime();
-    System.out.println("INFO: Execution time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms (query)");
+    logger.info("Execution time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms (query)");
   };
 
   public static Handler queryTable = ctx -> {
+    logger.info("/query_table");
     long timeStart = System.nanoTime();
-
     String strQuery = ctx.queryParam("query");
-    System.out.println("INFO: A request is received: " + strQuery);
+    logger.info(strQuery);
     HashMap<String, Object> response = new HashMap<>();
 
     // Run the PGQL query and get the result in table
@@ -113,10 +113,11 @@ public class RetrievalControllerPgv {
       response.put("request", ctx.fullUrl());
       response.put("table", table);
     } catch (PgqlException e) {
-      response.put("error", printException(e));
+      response.put("error", "PgqlException");
+      logger.info("error", e);
     }
     long timeEnd = System.nanoTime();
-    System.out.println("INFO: Execution time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms (queryTable)");
+    logger.info("Execution time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms");
     ctx.contentType("application/json");
     ctx.json(response);
   };

@@ -22,6 +22,7 @@ import oracle.pgx.api.*;
 
 public class Main {
 
+  public static Logger logger;
 	public static Connection conn;
 	public static PgqlConnection pgqlConn;
 	public static ServerInstance pgxInstance;
@@ -34,8 +35,8 @@ public class Main {
 
 	public static void main(String[] args) throws Exception {
 
-		Logger logger = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
-		logger.setLevel(Level.WARN);
+		logger = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+		logger.setLevel(Level.INFO);
 
 		Javalin app = Javalin.create(config -> {
 			config.enableCorsForAllOrigins();
@@ -84,7 +85,7 @@ public class Main {
 		RetrievalController.countNodes();
 		RetrievalControllerPgx.countNodes();
 
-		System.out.println("INFO: Ready to accept requests");
+		logger.info("Ready to accept requests");
 		app.post("/merge_node/", UpdateController.mergeNode); 
 		app.post("/merge_edge/", UpdateController.mergeEdge);
 		//app.post("/merge_graph/", UpdateController.mergeGraph);

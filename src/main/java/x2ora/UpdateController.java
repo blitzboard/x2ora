@@ -10,15 +10,17 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.UUID;
 
+
 public class UpdateController {
 
   public static Handler update = ctx -> {
+    logger.info("/update");
     long timeStart = System.nanoTime();
     PgGraphNamed pgn = ctx.bodyAsClass(PgGraphNamed.class);
     String strGraphId = pgn.getId();
     String strGraphProps = pgn.getPropertiesJSON();
     PgGraph pg = pgn.getPg();
-    System.out.println("INFO: Graph received (" + pg.countNodes() + " nodes, " + pg.countEdges() + " edges).");
+    logger.info("Graph received [" + pg.countNodes() + " nodes, " + pg.countEdges() + " edges]");
 
     HashMap<String, String> response = new HashMap<>();
     if (exists(strGraphId)) {
@@ -30,19 +32,20 @@ public class UpdateController {
     }
 
     long timeEnd = System.nanoTime();
-    System.out.println("INFO: Execution Time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms");
+    logger.info("Execution time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms");
     response.put("request", "update");
     response.put("graphId", strGraphId);
     ctx.json(response);
   };
 
   public static Handler create = ctx -> {
+    logger.info("/create");
     long timeStart = System.nanoTime();
     PgGraphNamed pgn = ctx.bodyAsClass(PgGraphNamed.class);
     String strGraphId = UUID.randomUUID().toString();
     String strGraphProps = pgn.getPropertiesJSON();
     PgGraph pg = pgn.getPg();
-    System.out.println("INFO: Graph received (" + pg.countNodes() + " nodes, " + pg.countEdges() + " edges).");
+    logger.info("Graph received [" + pg.countNodes() + " nodes, " + pg.countEdges() + " edges]");
 
     HashMap<String, String> response = new HashMap<>();
     if (exists(strGraphId)) {
@@ -53,13 +56,14 @@ public class UpdateController {
     }
 
     long timeEnd = System.nanoTime();
-    System.out.println("INFO: Execution Time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms");
+    logger.info("Execution time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms");
     response.put("request", "create");
     response.put("graphId", strGraphId);
     ctx.json(response);
   };
 
   public static Handler drop = ctx -> {
+    logger.info("/drop");
     long timeStart = System.nanoTime();
     String strGraphId = ctx.formParam("graph");
 
@@ -72,13 +76,14 @@ public class UpdateController {
     }
     
     long timeEnd = System.nanoTime();
-    System.out.println("INFO: Execution Time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms");
+    logger.info("Execution time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms");
     response.put("request", "drop");
     response.put("graphId", strGraphId);
     ctx.json(response);
   };
   
   public static Handler rename = ctx -> {
+    logger.info("/rename");
     long timeStart = System.nanoTime();
     String strId = ctx.formParam("graph");
     String strName = ctx.formParam("name");
@@ -92,7 +97,7 @@ public class UpdateController {
     }
 
     long timeEnd = System.nanoTime();
-    System.out.println("INFO: Execution Time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms");
+    logger.info("Execution time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms");
     response.put("request", "rename");
     response.put("graphId", strId);
     ctx.json(response);
@@ -108,10 +113,11 @@ public class UpdateController {
     try {
       ps.setString(1, strGraphId);
       ps.setString(2, strGraphProps);
+      logger.info(query + " [" + strGraphId + ", <strGraphProps>]");
       ps.execute();
     } catch (Exception e) {
       conn.rollback();
-      System.out.println("rollback");
+      logger.info("rollback");
       result = printException(e);
       throw e;
     };
@@ -119,6 +125,7 @@ public class UpdateController {
 
     query = "INSERT INTO " + strPgvNode + " VALUES (?, ?, ?, ?)";
     ps = conn.prepareStatement(query);
+    logger.info(query + " [for " + pg.getNodes().size() + " nodes]");
     for (PgNode node : pg.getNodes()) {
       try {
         ps.setString(1, strGraphId);
@@ -128,7 +135,7 @@ public class UpdateController {
         ps.execute();
       } catch (Exception e) {
         conn.rollback();
-        System.out.println("rollback");
+        logger.info("rollback");
         result = printException(e);
         throw e;
       };
@@ -137,6 +144,7 @@ public class UpdateController {
 
     query = "INSERT INTO " + strPgvEdge + " VALUES (?, ?, ?, ?, ?, ?)";
     ps = conn.prepareStatement(query);
+    logger.info(query + " [for " + pg.getEdges().size() + " edges]");
     for (PgEdge edge : pg.getEdges()) {
       try {
         ps.setString(1, strGraphId);
@@ -148,7 +156,7 @@ public class UpdateController {
         ps.execute();
       } catch (Exception e) {
         conn.rollback();
-        System.out.println("rollback");
+        logger.info("rollback");
         result = result + printException(e);
         throw e;
       };
@@ -165,6 +173,7 @@ public class UpdateController {
     String query = "";
 
     query = "DELETE FROM " + strPgvEdge + " WHERE graph = ?";
+    logger.info(query + " [" + strGraphId + "]");
     try (PreparedStatement ps = conn.prepareStatement(query)) {
       ps.setString(1, strGraphId);
       ps.execute();
@@ -172,12 +181,13 @@ public class UpdateController {
       result = result + "All edges in " + strGraphId + " is deleted.\n";
     } catch (Exception e) {
       conn.rollback();
-      System.out.println("INFO: rollback");
+      logger.info("rollback");
       result = printException(e);
       throw e;
     };
 
     query = "DELETE FROM " + strPgvNode + " WHERE graph = ?";
+    logger.info(query + " [" + strGraphId + "]");
     try (PreparedStatement ps = conn.prepareStatement(query)) {
       ps.setString(1, strGraphId);
       ps.execute();
@@ -185,12 +195,13 @@ public class UpdateController {
       result = result + "All nodes in " + strGraphId + " is deleted.\n";
     } catch (Exception e) {
       conn.rollback();
-      System.out.println("INFO: rollback");
+      logger.info("rollback");
       result = printException(e);
       throw e;
     };
 
-    query = "DELETE FROM " + strPgvGraph + " WHERE id = ?";
+    query = "DELETE FROM " + strPgvGraph + " WHERE graph = ?";
+    logger.info(query + " [" + strGraphId + "]");
     try (PreparedStatement ps = conn.prepareStatement(query)) {
       ps.setString(1, strGraphId);
       ps.execute();
@@ -198,7 +209,7 @@ public class UpdateController {
       result = result + "Graph " + strGraphId + " is deleted.\n";
     } catch (Exception e) {
       conn.rollback();
-      System.out.println("INFO: rollback");
+      logger.info("rollback");
       result = printException(e);
       throw e;
     };
@@ -215,13 +226,13 @@ public class UpdateController {
     try (PreparedStatement ps = conn.prepareStatement(query)) {
       ps.setString(1, strName);
       ps.setString(2, strId);
-      System.out.println("INFO: " + query + " (" + strName + ", " + strId + ")");
+      logger.info("" + query + " (" + strName + ", " + strId + ")");
       ps.execute();
       ps.close();
       result = result + "Graph " + strId + " is renamed to " + strName + ".\n";
     } catch (Exception e) {
       conn.rollback();
-      System.out.println("INFO: rollback");
+      logger.info("rollback");
       result = printException(e);
       throw e;
     };
@@ -236,14 +247,17 @@ public class UpdateController {
       String query = "SELECT id FROM " + strPgvGraph + " WHERE id = '" + strGraphId + "' FETCH FIRST 1 ROWS ONLY";
       PreparedStatement ps = conn.prepareStatement(query);
       ResultSet rs = ps.executeQuery();
-      System.out.println("INFO: " + query);
+      logger.info("" + query);
       if (rs.next()) {
         result = true;
+        logger.info("Graph exists [" + strGraphId + "]");
+      } else {
+        logger.info("Graph does not exist [" + strGraphId + "]");
       }
       rs.close();
       ps.close();
     } catch (SQLException e) {
-      System.out.println(printException(e));
+      logger.info(printException(e));
     }
     return result;
   };
@@ -259,7 +273,7 @@ public class UpdateController {
     String result = mergeNode(strGraph, strId, strLabel, strProps);
     conn.commit();
     long timeEnd = System.nanoTime();
-    System.out.println("INFO: Execution Time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms (" + result + ")");
+    logger.info("Execution time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms (" + result + ")");
     ctx.result(result + "\n");
   };
 
@@ -275,7 +289,7 @@ public class UpdateController {
     String result = mergeEdge(strGraph, strSrcId, strDstId, strLabel, strProps);
     conn.commit();
     long timeEnd = System.nanoTime();
-    System.out.println("INFO: Execution Time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms (" + result + ")");
+    logger.info("Execution time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms (" + result + ")");
     ctx.result(result + "\n");
   };
 
@@ -286,22 +300,22 @@ public class UpdateController {
     String strGraph = pgn.getId();
     PgGraph pg = pgn.getPg();
 
-    System.out.println("INFO: Graph received (" + pg.countNodes() + " nodes, " + pg.countEdges() + " edges).");
+    logger.info("Graph received (" + pg.countNodes() + " nodes, " + pg.countEdges() + " edges).");
 
     for (PgNode node : pg.getNodes()) {
       String result = mergeNode(strGraph, (String)node.getId(), node.getLabel(), node.getPropertiesJSON());
-      System.out.println(result);
+      logger.info(result);
     }
 
     for (PgEdge edge : pg.getEdges()) {
       String result = mergeEdge(strGraph, (String)edge.getFrom(), (String)edge.getTo(), edge.getLabel(), edge.getPropertiesJSON());
-      System.out.println(result);
+      logger.info(result);
     }
     
     String result = "";
     conn.commit();
     long timeEnd = System.nanoTime();
-    System.out.println("INFO: Execution Time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms (" + result + ")");
+    logger.info("Execution time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms (" + result + ")");
     ctx.result(result + "\n");
   };
 
@@ -340,7 +354,7 @@ public class UpdateController {
         ps.close();
       } catch (Exception e) {
         conn.rollback();
-        System.out.println("rollback");
+        logger.info("rollback");
         result = printException(e);
       };
     }
@@ -421,7 +435,7 @@ public class UpdateController {
         ps.close();
       } catch (Exception e) {
         conn.rollback();
-        System.out.println("rollback");
+        logger.info("rollback");
         throw e;
       };
     }

@@ -11,7 +11,7 @@ Download Oracle Graph Client library.
 Locate and unzip the library under `x2ora` directory.
 
     cd ~/x2ora/
-    unzip oracle-graph-client-22.3.0.zip
+    unzip oracle-graph-client-23.2.0.zip
 
 Set database login information.
 

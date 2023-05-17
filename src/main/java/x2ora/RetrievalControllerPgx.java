@@ -30,7 +30,7 @@ public class RetrievalControllerPgx {
       result = printException(e);
     }
     long timeEnd = System.nanoTime();
-    System.out.println("INFO: Execution time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms (" + result + ")");
+    logger.info("Execution time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms (" + result + ")");
     return result;
   };
 
@@ -60,16 +60,17 @@ public class RetrievalControllerPgx {
       }
     }
     long timeEnd = System.nanoTime();
-    System.out.println("INFO: Execution time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms (" + result + ")");
+    logger.info("Execution time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms (" + result + ")");
   }
 
   public static Handler queryPath = ctx -> {
+    logger.info("/query_path");
     long timeStart = System.nanoTime();
 
     String strGraph = ctx.queryParam("graph");
     String strMatch = ctx.queryParam("match");
     String strWhere = ctx.queryParam("where");
-    System.out.println("INFO: A request is received: " + strMatch);
+    logger.info("A request is received: " + strMatch);
 
     // SELECT and WHERE
     String strSelect = "\nSELECT DISTINCT ";
@@ -97,7 +98,7 @@ public class RetrievalControllerPgx {
 
     // Complete PGQL query
     strMatch = strSelect + "\nFROM MATCH " + strMatch + " ONE ROW PER STEP (path_src, path_edge, path_dst)\nWHERE " + strWhereGraph + strWhere;
-    System.out.println("INFO: Query is modified:" + strMatch);
+    logger.info("Query is modified:" + strMatch);
 
     getGraph();
 
@@ -111,12 +112,13 @@ public class RetrievalControllerPgx {
       response.put("request", ctx.fullUrl());
       response.put("pg", pg);
     } catch (Exception e) {
-      response.put("error", printException(e));
+      response.put("error", "Exception");
+      logger.info("error", e);
     }
     ctx.contentType("application/json");
     ctx.json(response);
     long timeEnd = System.nanoTime();
-    System.out.println("INFO: Execution time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms (query)");
+    logger.info("Execution time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms (query)");
   };
 
   private static PgGraph getResultPG(PgqlResultSet rs, int cntNode, int cntEdge) {
