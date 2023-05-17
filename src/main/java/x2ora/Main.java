@@ -86,9 +86,6 @@ public class Main {
 		RetrievalControllerPgx.countNodes();
 
 		logger.info("Ready to accept requests");
-		app.post("/merge_node/", UpdateController.mergeNode); 
-		app.post("/merge_edge/", UpdateController.mergeEdge);
-		//app.post("/merge_graph/", UpdateController.mergeGraph);
 		app.post("/create/", UpdateController.create);
 		app.post("/update/", UpdateController.update);
 		app.post("/drop/", UpdateController.drop);
