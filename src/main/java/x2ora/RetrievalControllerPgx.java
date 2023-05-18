@@ -1,23 +1,14 @@
 package x2ora;
 
-import io.javalin.http.Handler;
-
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.ResourceBundle;
-import java.util.concurrent.ExecutionException;
-
 import static x2ora.Main.*;
-
-import oracle.pgx.api.GraphSource;
+import io.javalin.http.Handler;
+import java.util.HashMap;
 import oracle.pgx.api.PgqlResultSet;
 import oracle.pgql.lang.PgqlException;
-import oracle.pg.rdbms.GraphServer;
 
 public class RetrievalControllerPgx {
 
   public static String countNodes() throws Exception {
-    loadGraphIntoPgx();
     long timeStart = System.nanoTime();
     String result = "";
     
@@ -34,44 +25,11 @@ public class RetrievalControllerPgx {
     return result;
   };
 
-  private static void loadGraphIntoPgx() {
-    logger.info("loadGraphIntoPgx()");
-    long timeStart = System.nanoTime();
-    ResourceBundle rb = ResourceBundle.getBundle("common");
-    String strPgxGraph = rb.getString("pgx_graph");
-    try {
-      pgxGraph = pgxSession.getGraph(strPgxGraph.toUpperCase());
-      logger.info("The graph exists in memory. Attached the graph.");
-    } catch (Exception e) {
-      logger.info("The graph does not exist in memory");
-      try {
-        logger.info("Connect to PGX");
-        pgxInstance = GraphServer.getInstance(
-          rb.getString("base_url"),
-          rb.getString("username"),
-          rb.getString("password").toCharArray()
-        );
-        try {
-          logger.info("Load the graph into PGX");
-          pgxSession = pgxInstance.createSession("x2ora");
-          pgxGraph = pgxSession.readGraphByName(strPgxGraph.toUpperCase(), GraphSource.PG_VIEW);
-        } catch (ExecutionException | InterruptedException e2) {
-          e2.printStackTrace();
-          logger.error("Exception", e2);
-        }
-      } catch (IOException e1) {
-        logger.error("Exception", e1);
-      }
-    }
-    long timeEnd = System.nanoTime();
-    logger.info("Execution time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms");
-  }
-
   public static Handler queryPath = ctx -> {
     logger.info("/query_path");
     long timeStart = System.nanoTime();
 
-    String strGraph = ctx.queryParam("graph");
+    //String strGraph = ctx.queryParam("graph");
     String strMatch = ctx.queryParam("match");
     String strWhere = ctx.queryParam("where");
     logger.info("A request is received: " + strMatch);
@@ -86,25 +44,17 @@ public class RetrievalControllerPgx {
     String[] nodes = {"path_src", "path_dst"};
     for (String v : nodes) {
       strSelect = strSelect + v + ".id AS " + v + "_id, " + v + ".label AS " + v + "_label, " + v + ".props AS " + v + "_props, ";
-      if (!(strGraph == null || strGraph.equals(""))) {
-        //strWhereGraph = strWhereGraph + v + ".graph = '" + strGraph + "' AND ";
-      }
     }
     int cntEdge = 1; 
     String[] edges = {"path_edge"};
     for (String v : edges) {
       strSelect = strSelect + v + ".src AS " + v + "_src, " + v + ".dst AS " + v + "_dst, " + v + ".label AS " + v + "_label, " + v + ".props AS " + v + "_props, ";
-      if (!(strGraph == null || strGraph.equals(""))) {
-        //strWhereGraph = strWhereGraph + v + ".graph = '" + strGraph + "' AND ";
-      }
     }
     strSelect = strSelect + "1 ";
 
     // Complete PGQL query
     strMatch = strSelect + "\nFROM MATCH " + strMatch + " ONE ROW PER STEP (path_src, path_edge, path_dst)\nWHERE " + strWhereGraph + strWhere;
     logger.info("Query is complemented:\n" + strMatch + "\n");
-
-    //getGraph();
 
     // Run the PGQL query and get the result in PG-JSON
     HashMap<String, Object> response = new HashMap<>();
@@ -143,8 +93,8 @@ public class RetrievalControllerPgx {
             if (label.equals("")) { // PGX returns "" for null
               label = null;
             }
-            //String props = rs.getString(i + 2);
-            PgNode node = new PgNode(id, label, "{}");
+            String props = rs.getString(i + 2);
+            PgNode node = new PgNode(id, label, props);
             pg.addNode(node);
           }
 				}
@@ -157,8 +107,8 @@ public class RetrievalControllerPgx {
           if (label.equals("")) { // PGX returns "" for null
             label = null;
           }
-          //String props = rs.getString(i + 3);
-          PgEdge edge = new PgEdge(idSrc, idDst, undirected, label, "{}");
+          String props = rs.getString(i + 3);
+          PgEdge edge = new PgEdge(idSrc, idDst, undirected, label, props);
           pg.addEdge(edge);
 				}
 			}
@@ -167,5 +117,4 @@ public class RetrievalControllerPgx {
 		}
 		return pg;
 	}
-
 }

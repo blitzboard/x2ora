@@ -1,4 +1,4 @@
--- v1 tables (using CLOB and VARCHAR2)
+-- Using CLOB and VARCHAR2
 
 CREATE TABLE x2graph (
   id VARCHAR2(255)
@@ -31,7 +31,7 @@ CREATE TABLE x2edge (
 , CONSTRAINT x2edge_check CHECK (props IS JSON)
 );
 
--- v1 tables (using BLOB)
+-- Using BLOB
 
 CREATE TABLE x2graph (
   id VARCHAR2(255)
@@ -68,8 +68,6 @@ INSERT INTO x2node VALUES ('TEST', '1', 'PERSON', '{"AGE":[37]}');
 INSERT INTO x2node VALUES ('TEST', '2', 'PERSON', '{"AGE":[36]}');
 INSERT INTO x2edge VALUES ('TEST', '73da3dd7-2518-459a-9c36-c2104a95fc7f', '1', '2', 'KNOWS', '{"SINCE":[2017]}');
 
--- v1 pgv graph
-
 DROP PROPERTY GRAPH x2;
 
 CREATE PROPERTY GRAPH x2
@@ -89,13 +87,14 @@ CREATE PROPERTY GRAPH x2
   )
   OPTIONS (PG_VIEW);
 
--- v1 pgx graph
+DROP VIEW x2metanode;
+DROP VIEW x2metaedge;
 
 CREATE VIEW x2metanode AS
 SELECT
   id
 , MAX(label) AS label
-, '{}' AS props
+, '{"count":['||COUNT(*)||']}' AS props
 FROM x2node
 GROUP BY id;
 
@@ -104,8 +103,8 @@ SELECT
   ANY_VALUE(id) AS id
 , src
 , dst
-, MAX(label)
-, '{}' AS props
+, MAX(label) AS label
+, '{"count":['||COUNT(*)||']}' AS props
 FROM x2edge
 GROUP BY src, dst, label;
 

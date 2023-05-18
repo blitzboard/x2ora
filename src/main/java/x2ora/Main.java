@@ -20,6 +20,9 @@ import oracle.pg.rdbms.GraphServer;
 import oracle.pg.rdbms.pgql.PgqlConnection;
 import oracle.pgx.api.*;
 
+import java.io.IOException;
+import java.util.concurrent.ExecutionException;
+
 public class Main {
 
   public static Logger logger;
@@ -54,17 +57,6 @@ public class Main {
 		
 		ResourceBundle rb = ResourceBundle.getBundle("common");
 
-		// Connection for PGX
-    /*
-		ServerInstance pgxInstance = GraphServer.getInstance(
-			rb.getString("base_url"),
-			rb.getString("username"),
-			rb.getString("password").toCharArray()
-		);
-		pgxSession = pgxInstance.createSession("x2ora");
-		String strPgxGraph = rb.getString("pgx_graph");
-		pgxGraph = pgxSession.readGraphByName(strPgxGraph.toUpperCase(), GraphSource.PG_VIEW);
-    */
 	  // Connection for PGV
 		PoolDataSource pds = PoolDataSourceFactory.getPoolDataSource();
 		pds.setConnectionFactoryClassName("oracle.jdbc.pool.OracleDataSource");
@@ -81,6 +73,9 @@ public class Main {
 		strPgvGraph = strPgv + "graph";
 		strPgvNode = strPgv + "node";
 		strPgvEdge = strPgv + "edge";
+
+    // Connection for PGX
+    loadGraphIntoPgx(rb.getString("pgx_graph"));
 
 		// Run a test query at startup
 		RetrievalController.countNodes();
@@ -104,6 +99,38 @@ public class Main {
 		sslContextFactory.setKeyStorePassword("welcome1");
 		return sslContextFactory;
 	}
+
+  private static void loadGraphIntoPgx(String strPgxGraph) {
+    logger.info("loadGraphIntoPgx()");
+    long timeStart = System.nanoTime();
+    ResourceBundle rb = ResourceBundle.getBundle("common");
+    
+    try {
+      pgxGraph = pgxSession.getGraph(strPgxGraph.toUpperCase());
+      logger.info("The graph exists in memory. Attached the graph.");
+    } catch (Exception e) {
+      logger.info("The graph does not exist in memory");
+      try {
+        logger.info("Connect to PGX");
+        pgxInstance = GraphServer.getInstance(
+          rb.getString("base_url"),
+          rb.getString("username"),
+          rb.getString("password").toCharArray()
+        );
+        try {
+          logger.info("Load the graph into PGX");
+          pgxSession = pgxInstance.createSession("x2ora");
+          pgxGraph = pgxSession.readGraphByName(strPgxGraph.toUpperCase(), GraphSource.PG_VIEW);
+        } catch (ExecutionException | InterruptedException e2) {
+          logger.error("Exception", e2);
+        }
+      } catch (IOException e1) {
+        logger.error("Exception", e1);
+      }
+    }
+    long timeEnd = System.nanoTime();
+    logger.info("Execution time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms");
+  }
 
 	public static String printException(Exception e) {
 		e.printStackTrace();
