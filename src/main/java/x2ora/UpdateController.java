@@ -199,7 +199,7 @@ public class UpdateController {
       throw e;
     };
 
-    query = "DELETE FROM " + strPgvGraph + " WHERE graph = ?";
+    query = "DELETE FROM " + strPgvGraph + " WHERE id = ?";
     logger.info(query + " [" + strGraphId + "]");
     try (PreparedStatement ps = conn.prepareStatement(query)) {
       ps.setString(1, strGraphId);
