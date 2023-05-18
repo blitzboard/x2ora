@@ -95,17 +95,17 @@ CREATE VIEW x2metanode AS
 SELECT
   id
 , MAX(label) AS label
-, MAX(props) AS props
+, '{}' AS props
 FROM x2node
 GROUP BY id;
 
 CREATE VIEW x2metaedge AS
 SELECT
-  MAX(id) AS id
+  ANY_VALUE(id) AS id
 , src
 , dst
-, label
-, MAX(props) AS props
+, MAX(label)
+, '{}' AS props
 FROM x2edge
 GROUP BY src, dst, label;
 

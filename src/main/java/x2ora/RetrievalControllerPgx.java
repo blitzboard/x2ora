@@ -17,7 +17,7 @@ import oracle.pg.rdbms.GraphServer;
 public class RetrievalControllerPgx {
 
   public static String countNodes() throws Exception {
-    getGraph();
+    loadGraphIntoPgx();
     long timeStart = System.nanoTime();
     String result = "";
     
@@ -34,33 +34,37 @@ public class RetrievalControllerPgx {
     return result;
   };
 
-  private static void getGraph() {
-    String result = "Get graph";
+  private static void loadGraphIntoPgx() {
+    logger.info("loadGraphIntoPgx()");
     long timeStart = System.nanoTime();
     ResourceBundle rb = ResourceBundle.getBundle("common");
     String strPgxGraph = rb.getString("pgx_graph");
     try {
       pgxGraph = pgxSession.getGraph(strPgxGraph.toUpperCase());
+      logger.info("The graph exists in memory. Attached the graph.");
     } catch (Exception e) {
-      result = "Get graph with a new session";
+      logger.info("The graph does not exist in memory");
       try {
+        logger.info("Connect to PGX");
         pgxInstance = GraphServer.getInstance(
           rb.getString("base_url"),
           rb.getString("username"),
           rb.getString("password").toCharArray()
         );
         try {
+          logger.info("Load the graph into PGX");
           pgxSession = pgxInstance.createSession("x2ora");
           pgxGraph = pgxSession.readGraphByName(strPgxGraph.toUpperCase(), GraphSource.PG_VIEW);
         } catch (ExecutionException | InterruptedException e2) {
           e2.printStackTrace();
+          logger.error("Exception", e2);
         }
       } catch (IOException e1) {
-        e1.printStackTrace();
+        logger.error("Exception", e1);
       }
     }
     long timeEnd = System.nanoTime();
-    logger.info("Execution time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms (" + result + ")");
+    logger.info("Execution time: " + (timeEnd - timeStart) / 1000 / 1000 + "ms");
   }
 
   public static Handler queryPath = ctx -> {
@@ -83,7 +87,7 @@ public class RetrievalControllerPgx {
     for (String v : nodes) {
       strSelect = strSelect + v + ".id AS " + v + "_id, " + v + ".label AS " + v + "_label, " + v + ".props AS " + v + "_props, ";
       if (!(strGraph == null || strGraph.equals(""))) {
-        strWhereGraph = strWhereGraph + v + ".graph = '" + strGraph + "' AND ";
+        //strWhereGraph = strWhereGraph + v + ".graph = '" + strGraph + "' AND ";
       }
     }
     int cntEdge = 1; 
@@ -91,23 +95,22 @@ public class RetrievalControllerPgx {
     for (String v : edges) {
       strSelect = strSelect + v + ".src AS " + v + "_src, " + v + ".dst AS " + v + "_dst, " + v + ".label AS " + v + "_label, " + v + ".props AS " + v + "_props, ";
       if (!(strGraph == null || strGraph.equals(""))) {
-        strWhereGraph = strWhereGraph + v + ".graph = '" + strGraph + "' AND ";
+        //strWhereGraph = strWhereGraph + v + ".graph = '" + strGraph + "' AND ";
       }
     }
     strSelect = strSelect + "1 ";
 
     // Complete PGQL query
     strMatch = strSelect + "\nFROM MATCH " + strMatch + " ONE ROW PER STEP (path_src, path_edge, path_dst)\nWHERE " + strWhereGraph + strWhere;
-    logger.info("Query is modified:" + strMatch);
+    logger.info("Query is complemented:\n" + strMatch + "\n");
 
-    getGraph();
+    //getGraph();
 
     // Run the PGQL query and get the result in PG-JSON
     HashMap<String, Object> response = new HashMap<>();
-    PgGraph pg = new PgGraph();
     try {
       PgqlResultSet rs = pgxGraph.queryPgql(strMatch);
-      pg = getResultPG(rs, cntNode, cntEdge);
+      PgGraph pg = getResultPG(rs, cntNode, cntEdge);
       rs.close();
       response.put("request", ctx.fullUrl());
       response.put("pg", pg);
@@ -140,8 +143,8 @@ public class RetrievalControllerPgx {
             if (label.equals("")) { // PGX returns "" for null
               label = null;
             }
-            String props = rs.getString(i + 2);
-            PgNode node = new PgNode(id, label, props);
+            //String props = rs.getString(i + 2);
+            PgNode node = new PgNode(id, label, "{}");
             pg.addNode(node);
           }
 				}
@@ -154,8 +157,8 @@ public class RetrievalControllerPgx {
           if (label.equals("")) { // PGX returns "" for null
             label = null;
           }
-          String props = rs.getString(i + 3);
-          PgEdge edge = new PgEdge(idSrc, idDst, undirected, label, props);
+          //String props = rs.getString(i + 3);
+          PgEdge edge = new PgEdge(idSrc, idDst, undirected, label, "{}");
           pg.addEdge(edge);
 				}
 			}

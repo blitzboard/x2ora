@@ -55,6 +55,7 @@ public class Main {
 		ResourceBundle rb = ResourceBundle.getBundle("common");
 
 		// Connection for PGX
+    /*
 		ServerInstance pgxInstance = GraphServer.getInstance(
 			rb.getString("base_url"),
 			rb.getString("username"),
@@ -63,7 +64,7 @@ public class Main {
 		pgxSession = pgxInstance.createSession("x2ora");
 		String strPgxGraph = rb.getString("pgx_graph");
 		pgxGraph = pgxSession.readGraphByName(strPgxGraph.toUpperCase(), GraphSource.PG_VIEW);
-		
+    */
 	  // Connection for PGV
 		PoolDataSource pds = PoolDataSourceFactory.getPoolDataSource();
 		pds.setConnectionFactoryClassName("oracle.jdbc.pool.OracleDataSource");
