@@ -16,12 +16,12 @@ plugins {
 mainClassName = 'x2ora.Main'
 
 repositories {
-    // Use jcenter for resolving dependencies.
-    // You can declare any Maven/Ivy/file repository here.
     mavenCentral()
-    //jcenter()
     maven {
-      url "https://artifacts.metaborg.org/content/repositories/releases/"
+      url "https://artifacts.metaborg.org/content/repositories/releases/" // For Spoofax
+    }
+    maven {
+      url "https://releases.usethesource.io/maven/" // For Capsule
     }
 }
 
@@ -39,16 +39,17 @@ dependencies {
 
     // Javalin
     implementation 'io.javalin:javalin:4.6.4'
-    implementation group: 'org.json', name: 'json', version: '20220320'
+    implementation 'org.json:json:20220320'
 
     // Jackson
     implementation 'com.fasterxml.jackson.core:jackson-core:2.14.3'
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.14.3'
+
+    // Oracle UCP
+    implementation 'com.oracle.database.jdbc:ucp:19.19.0.0'
     
     // Oracle Graph Client
     implementation 'com.oracle.database.graph:opg-client:23.2.0'
-    //implementation fileTree(dir: './oracle-graph-client-23.2.0/lib/', include: '*.jar', exclude: 'ons-19.12.0.0.jar')
-    // implementation fileTree(dir: '/opt/oracle/graph/client/lib/', include: '*.jar', exclude: 'ons-19.12.12.0.0.jar')
 }
 
 test {
