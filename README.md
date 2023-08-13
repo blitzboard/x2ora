@@ -4,16 +4,7 @@ Clone this repository.
 
     git clone https://github.com/blitzboard/x2ora.git
 
-Download Oracle Graph Client library.
-
-* [Oracle Graph Client](https://www.oracle.com/database/technologies/spatialandgraph/property-graph-features/graph-server-and-client/graph-server-and-client-downloads.html)
-
-Locate and unzip the library under `x2ora` directory.
-
-    cd ~/x2ora/
-    unzip oracle-graph-client-23.2.0.zip
-
-Set database login information.
+Set database information.
 
     cd ~/x2ora/src/main/resources/
     cp common.sample.properties common.properties
@@ -22,7 +13,7 @@ Set database login information.
 Run Gradle.
 
     cd ~/x2ora/
-    ./gradlew run
+    sh restart.sh
 
 Update requests.
 
