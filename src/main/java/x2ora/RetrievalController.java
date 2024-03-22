@@ -25,7 +25,7 @@ public class RetrievalController {
       String query = "SELECT COUNT(*) FROM " + strPgvNode;
       PreparedStatement ps = conn.prepareStatement(query);
       ResultSet rs = ps.executeQuery();
-      if (rs.next()){
+      if (rs.next()) {
         result = "Test query succeeded. X2 nodes: " + rs.getInt(1);
       }
       rs.close();
@@ -43,7 +43,9 @@ public class RetrievalController {
     long timeStart = System.nanoTime();
     LinkedList<HashMap<String, String>> response = new LinkedList<HashMap<String, String>>();
     try {
-      String query = "SELECT id, JSON_VALUE(props, '$.name[0]') AS name FROM " + strPgvGraph;
+      String query = "SELECT id, JSON_VALUE(props, '$.name[0]') AS name" +
+          " FROM " + strPgvGraph +
+          " ORDER BY JSON_VALUE(props, '$.lastUpdate[0]') DESC;";
       logger.info(query);
       PreparedStatement ps = conn.prepareStatement(query);
       ResultSet rs = ps.executeQuery();
@@ -95,7 +97,8 @@ public class RetrievalController {
       if (rs.next()) {
         response.put("id", strGraph);
         ObjectMapper mapper = new ObjectMapper();
-        TypeReference<HashMap<String, List<Object>>> typeRef = new TypeReference<HashMap<String, List<Object>>>(){};
+        TypeReference<HashMap<String, List<Object>>> typeRef = new TypeReference<HashMap<String, List<Object>>>() {
+        };
         HashMap<String, List<Object>> properties = mapper.readValue(rs.getString("props"), typeRef);
         response.put("properties", properties);
       } else {
@@ -123,9 +126,9 @@ public class RetrievalController {
       ResultSet rs = ps.executeQuery();
       while (rs.next()) {
         PgNode node = new PgNode(
-          rs.getObject("id"),
-          rs.getString("label"),
-          rs.getString("props"));
+            rs.getObject("id"),
+            rs.getString("label"),
+            rs.getString("props"));
         pg.addNode(node);
       }
       // Edges
@@ -136,11 +139,11 @@ public class RetrievalController {
       rs = ps.executeQuery();
       while (rs.next()) {
         PgEdge edge = new PgEdge(
-          rs.getObject("src"),
-          rs.getObject("dst"),
-          false, // undirected
-          rs.getString("label"),
-          rs.getString("props"));
+            rs.getObject("src"),
+            rs.getObject("dst"),
+            false, // undirected
+            rs.getString("label"),
+            rs.getString("props"));
         pg.addEdge(edge);
       }
       rs.close();
