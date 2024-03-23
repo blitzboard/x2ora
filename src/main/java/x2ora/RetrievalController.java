@@ -45,7 +45,7 @@ public class RetrievalController {
     try {
       String query = "SELECT id, JSON_VALUE(props, '$.name[0]') AS name" +
           " FROM " + strPgvGraph +
-          " ORDER BY JSON_VALUE(props, '$.lastUpdate[0]') DESC;";
+          " ORDER BY JSON_VALUE(props, '$.lastUpdate[0]') DESC";
       logger.info(query);
       PreparedStatement ps = conn.prepareStatement(query);
       ResultSet rs = ps.executeQuery();
